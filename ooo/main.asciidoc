@@ -2,7 +2,7 @@
 
 .下面这段代码会有怎样的输出
 
-[source,go]
+[source,c]
 ----
 
 var x, y int
@@ -18,7 +18,7 @@ go func() {
 
 .显而易见的几种结果:
 
-[source,shell]
+[source,c]
 ----
 y:0 x:1
 x:0 y:1
@@ -28,7 +28,7 @@ y:1 x:1
 
 .令人意外的结果
 
-[source,shell]
+[source,c]
 ----
 x:0 y:0
 y:0 x:0
@@ -92,7 +92,7 @@ P2 中的指令和 <<snippet2>> 交错执行时，可能产生的结果是：111
 
 ==== litmus 验证
 
-[source,shell]
+[source,c]
 ----
 cat sb.litmus
 
@@ -108,7 +108,7 @@ exists (0:EAX=0 /\ 1:EAX=0)
 =>
 
 
-[source,shell]
+[source,c]
 ----
 ~ ❯❯❯ bin/litmus7 ./sb.litmus
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -242,7 +242,7 @@ ____
 
 ==== atomic 应用示例：双buffer
 
-[source,go]
+[source,c]
 ----
 var doublebuffer struct {
     buffer [2]option
@@ -265,7 +265,7 @@ option 可以是任意的自定义数据结构。
 
 ==== sync.Pool 中的锁
 
-[source,go]
+[source,c]
 ----
 var (
 	allPoolsMu Mutex
@@ -287,7 +287,7 @@ func (p *Pool) pinSlow() *poolLocal {
 ----
 
 ==== udp WriteTo 的锁
-[source,go]
+[source,c]
 ----
 func (fd *FD) WriteTo(p []byte, sa syscall.Sockaddr) (int, error) {
 	if err := fd.writeLock(); err != nil {

@@ -428,7 +428,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="listingblock">
 <div class="title">下面这段代码会有怎样的输出</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-go" data-lang="go">var x, y int
+<pre class="highlightjs highlight"><code class="language-c" data-lang="c">var x, y int
 go func() {
     x = 1 // A1
     fmt.Print("y:", y, " ") // A2
@@ -442,7 +442,7 @@ go func() {
 <div class="listingblock">
 <div class="title">显而易见的几种结果:</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-shell" data-lang="shell">y:0 x:1
+<pre class="highlightjs highlight"><code class="language-c" data-lang="c">y:0 x:1
 x:0 y:1
 x:1 y:1
 y:1 x:1</code></pre>
@@ -451,7 +451,7 @@ y:1 x:1</code></pre>
 <div class="listingblock">
 <div class="title">令人意外的结果</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-shell" data-lang="shell">x:0 y:0
+<pre class="highlightjs highlight"><code class="language-c" data-lang="c">x:0 y:0
 y:0 x:0</code></pre>
 </div>
 </div>
@@ -538,7 +538,7 @@ for i in range(100):
 <h4 id="truelitmus"><a class="anchor" href="#truelitmus"></a>litmus 验证</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-shell" data-lang="shell">cat sb.litmus
+<pre class="highlightjs highlight"><code class="language-c" data-lang="c">cat sb.litmus
 
 X86 SB
 { x=0; y=0; }
@@ -554,7 +554,7 @@ exists (0:EAX=0 /\ 1:EAX=0)</code></pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-shell" data-lang="shell">~ ❯❯❯ bin/litmus7 ./sb.litmus
+<pre class="highlightjs highlight"><code class="language-c" data-lang="c">~ ❯❯❯ bin/litmus7 ./sb.litmus
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Results for ./sb.litmus %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -689,7 +689,7 @@ Being a single instruction, it is non-interruptible. As an added "feature", the 
 <h4 id="trueatomic-buffer"><a class="anchor" href="#trueatomic-buffer"></a>atomic 应用示例：双buffer</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-go" data-lang="go">var doublebuffer struct {
+<pre class="highlightjs highlight"><code class="language-c" data-lang="c">var doublebuffer struct {
     buffer [2]option
     idx    int64
 }
@@ -716,7 +716,7 @@ atomic.CompareAndSwapInt64(&amp;doublebuffer.idx, doublebuffer.idx, 1-doublebuff
 <h4 id="truesync-pool"><a class="anchor" href="#truesync-pool"></a>sync.Pool 中的锁</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-go" data-lang="go">var (
+<pre class="highlightjs highlight"><code class="language-c" data-lang="c">var (
 	allPoolsMu Mutex
 	allPools   []*Pool
 )
@@ -740,7 +740,7 @@ func (p *Pool) pinSlow() *poolLocal {
 <h4 id="trueudp-writeto"><a class="anchor" href="#trueudp-writeto"></a>udp WriteTo 的锁</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-go" data-lang="go">func (fd *FD) WriteTo(p []byte, sa syscall.Sockaddr) (int, error) {
+<pre class="highlightjs highlight"><code class="language-c" data-lang="c">func (fd *FD) WriteTo(p []byte, sa syscall.Sockaddr) (int, error) {
 	if err := fd.writeLock(); err != nil {
 		return 0, err
 	}
@@ -811,7 +811,7 @@ func (p *Pool) pinSlow() *poolLocal {
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2019-06-11 22:57:00 CST
+Last updated 2019-06-11 23:01:40 CST
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/styles/github.min.css">
