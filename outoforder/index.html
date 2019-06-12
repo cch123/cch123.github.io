@@ -5,7 +5,7 @@
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.5.dev">
-<title>从 Out of Order 说起</title>
+<title>从 Memory Reordering 说起</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -420,7 +420,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article">
 <div id="header">
-<h1>从 Out of Order 说起</h1>
+<h1>从 Memory Reordering 说起</h1>
 </div>
 <div id="content">
 <div id="preamble">
@@ -456,7 +456,7 @@ y:0 x:0</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>这种令人意外的结果被称为内存重排： Memory Reorder</p>
+<p>这种令人意外的结果被称为内存重排： Memory Reordering</p>
 </div>
 </div>
 </div>
@@ -616,6 +616,12 @@ Time SB 0.11</code></pre>
 </div>
 <div class="title">Figure 3. MESI Protocol</div>
 </div>
+<div class="imageblock">
+<div class="content">
+<img src="L1.png" alt="L1.png">
+</div>
+<div class="title">Figure 4. CPU Cache Structure</div>
+</div>
 </div>
 </div>
 </div>
@@ -637,8 +643,15 @@ Time SB 0.11</code></pre>
 </tr>
 </table>
 </div>
-<div class="paragraph">
+<div class="ulist">
+<ul>
+<li>
+<p>减少程序指令数</p>
+</li>
+<li>
 <p>最大化提高 CPU 利用率。</p>
+</li>
+</ul>
 </div>
 </div>
 </div>
@@ -707,10 +720,10 @@ atomic.CompareAndSwapInt64(&amp;doublebuffer.idx, doublebuffer.idx, 1-doublebuff
 <div class="sect2">
 <h3 id="truelock"><a class="anchor" href="#truelock"></a>lock</h3>
 <div class="paragraph">
-<p>概念和用法就不讲了，你们应该都用过。</p>
+<p>概念和用法就不讲了，你们应该都用过。没有免费的午餐，有锁冲突就会大幅度降低性能。</p>
 </div>
 <div class="paragraph">
-<p>师傅总是教导我们,锁要减小他的粒度,但是总是有一些悲伤的故事:</p>
+<p>为了减小对性能的影响，锁应尽量减小粒度，并且不在互斥区内放入耗时操作，但是总是有一些悲伤的故事:</p>
 </div>
 <div class="sect3">
 <h4 id="truesync-pool"><a class="anchor" href="#truesync-pool"></a>sync.Pool 中的锁</h4>
@@ -803,7 +816,102 @@ func (p *Pool) pinSlow() *poolLocal {
 <li>
 <p>Goroutine 一开始很稳定，超过一定 QPS 之后暴涨</p>
 </li>
+<li>
+<p>可以通过压测方便地发现问题。</p>
+</li>
 </ul>
+</div>
+<div class="paragraph">
+<p>lock contention 的本质问题是需要进入互斥区的 g 需要等待独占 g 退出后才能进入互斥区，并行 &#8594; 串行</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="truecache-contention"><a class="anchor" href="#truecache-contention"></a>cache contention</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>cache contention 那也是 contention，使用 atomic，或者 false sharing 就会导致 cache contention。</p>
+</div>
+<div class="paragraph">
+<p>atomic 操作可以理解成 “true sharing”。</p>
+</div>
+<div class="paragraph">
+<p>症状：在核心数增多时，单次操作的成本上升，导致程序整体性能下降。</p>
+</div>
+<div class="sect2">
+<h3 id="truetrue-sharing"><a class="anchor" href="#truetrue-sharing"></a>true sharing</h3>
+<div class="paragraph">
+<p>例子:</p>
+</div>
+<div class="paragraph">
+<p>RWMutex 的 RLock:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-c" data-lang="c">func (rw *RWMutex) RLock() {
+    // ....
+	if atomic.AddInt32(&amp;rw.readerCount, 1) &lt; 0 {
+		// A writer is pending, wait for it.
+		runtime_SemacquireMutex(&amp;rw.readerSem, false)
+	}
+
+    // else 获取 RLock 成功
+    // ....
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>true sharing 带来的问题：</p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>sync: RWMutex scales poorly with CPU count</p>
+</div>
+</blockquote>
+<div class="attribution">
+&#8212; issue 17973
+</div>
+</div>
+<div class="paragraph">
+<p>至今还没有解决这个问题，如果解决了的话，根本不需要 sync.Map 出现了。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="truefalse-sharing"><a class="anchor" href="#truefalse-sharing"></a>false sharing</h3>
+<div class="listingblock">
+<div class="title">runtime/sema.go</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-c" data-lang="c">var semtable [semTabSize]struct {
+	root semaRoot
+	pad  [cpu.CacheLinePadSize - unsafe.Sizeof(semaRoot{})]byte
+}</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">runtime/time.go</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-c" data-lang="c">var timers [timersLen]struct {
+	timersBucket
+
+	// The padding should eliminate false sharing
+	// between timersBucket values.
+	pad [cpu.CacheLinePadSize - unsafe.Sizeof(timersBucket{})%cpu.CacheLinePadSize]byte
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>本来每个核心(在 Go 里的 GPM 中的 P 概念)独享的数据，如果发生 false sharing 了会怎么样？</p>
+</div>
+<div class="paragraph">
+<p>思考题：</p>
+</div>
+<div class="paragraph">
+<p>二维数组求和，横着遍历和竖着遍历哪种更快，为什么？</p>
+</div>
+<div class="paragraph">
+<p>为什么 Go 官方坚持不在 sync.Map 上增加 Len 方法？</p>
 </div>
 </div>
 </div>
@@ -811,7 +919,7 @@ func (p *Pool) pinSlow() *poolLocal {
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2019-06-11 23:08:26 CST
+Last updated 2019-06-12 23:26:37 CST
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/styles/github.min.css">
