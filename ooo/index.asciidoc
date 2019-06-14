@@ -1,4 +1,4 @@
-= 从 Out of Order 说起
+= 从 Memory Reordering 说起
 
 .下面这段代码会有怎样的输出
 
@@ -34,7 +34,7 @@ x:0 y:0
 y:0 x:0
 ----
 
-这种令人意外的结果被称为内存重排： Memory Reorder
+这种令人意外的结果被称为内存重排： Memory Reordering
 
 == 什么是内存重排
 
@@ -259,9 +259,9 @@ option 可以是任意的自定义数据结构。
 
 === lock
 
-概念和用法就不讲了，你们应该都用过。
+概念和用法就不讲了，你们应该都用过。没有免费的午餐，有锁冲突就会大幅度降低性能。
 
-师傅总是教导我们,锁要减小他的粒度,但是总是有一些悲伤的故事:
+为了减小对性能的影响，锁应尽量减小粒度，并且不在互斥区内放入耗时操作，但是总是有一些悲伤的故事:
 
 ==== sync.Pool 中的锁
 
@@ -287,6 +287,7 @@ func (p *Pool) pinSlow() *poolLocal {
 ----
 
 ==== udp WriteTo 的锁
+
 [source,c]
 ----
 func (fd *FD) WriteTo(p []byte, sa syscall.Sockaddr) (int, error) {
@@ -315,7 +316,7 @@ func (fd *FD) WriteTo(p []byte, sa syscall.Sockaddr) (int, error) {
 
 ==== tcp transport 上也有锁！
 
-[source,go]
+[source,c]
 ----
 type Transport struct {
 	idleMu     sync.Mutex
@@ -343,3 +344,33 @@ type Transport struct {
 
 * 压测过不了几千级别的 QPS(丢人！
 * Goroutine 一开始很稳定，超过一定 QPS 之后暴涨
+* 可以通过压测方便地发现问题。
+* lock contention 的本质问题是需要进入互斥区的 g 需要等待独占 g 退出后才能进入互斥区，并行 -> 串行
+
+== 当前 CPU 架构下的问题
+
+=== 缓存分层设计的问题
+
+二维数组循环的速度问题：
+
+=== cache contention
+
+==== false sharing
+
+在说到 cache contention 时经常提到。对于 CPU 来说，从内存中读取数据的最小单位就是一行 cache line。
+
+[source,c]
+----
+var semtable [semTabSize]struct {
+	root semaRoot
+	pad  [sys.CacheLineSize - unsafe.Sizeof(semaRoot{})]byte
+}
+----
+
+==== true sharing
+
+字面含义，多个核心共享相同的数据。需要用 mesi 协议不停地 invalidate 其它核心中的 cache line。
+
+== 课后问题
+
+为什么 sync.Map 官方拒绝加入 Len 方法
