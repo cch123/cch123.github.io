@@ -109,10 +109,10 @@ blockquote cite:before{content:"\2014 \0020"}
 blockquote cite a,blockquote cite a:visited{color:rgba(0,0,0,.6)}
 blockquote,blockquote p{line-height:1.6;color:rgba(0,0,0,.85)}
 @media only screen and (min-width:768px){h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2}
-h1{font-size:2.75em}
-h2{font-size:2.3125em}
-h3,#toctitle,.sidebarblock>.content>.title{font-size:1.6875em}
-h4{font-size:1.4375em}}
+    h1{font-size:2.75em}
+    h2{font-size:2.3125em}
+    h3,#toctitle,.sidebarblock>.content>.title{font-size:1.6875em}
+    h4{font-size:1.4375em}}
 table{background:#fff;margin-bottom:1.25em;border:solid 1px #dedede}
 table thead,table tfoot{background:#f7f8f7;font-weight:bold}
 table thead tr th,table thead tr td,table tfoot tr th,table tfoot tr td{padding:.5em .625em .625em;font-size:inherit;color:rgba(0,0,0,.8);text-align:left}
@@ -163,20 +163,20 @@ p a>code:hover{color:rgba(0,0,0,.9)}
 #toc a:active{text-decoration:underline}
 #toctitle{color:#7a2518;font-size:1.2em}
 @media only screen and (min-width:768px){#toctitle{font-size:1.375em}
-body.toc2{padding-left:15em;padding-right:0}
-#toc.toc2{margin-top:0!important;background-color:#f8f8f7;position:fixed;width:15em;left:0;top:0;border-right:1px solid #efefed;border-top-width:0!important;border-bottom-width:0!important;z-index:1000;padding:1.25em 1em;height:100%;overflow:auto}
-#toc.toc2 #toctitle{margin-top:0;margin-bottom:.8rem;font-size:1.2em}
-#toc.toc2>ul{font-size:.9em;margin-bottom:0}
-#toc.toc2 ul ul{margin-left:0;padding-left:1em}
-#toc.toc2 ul.sectlevel0 ul.sectlevel1{padding-left:0;margin-top:.5em;margin-bottom:.5em}
-body.toc2.toc-right{padding-left:0;padding-right:15em}
-body.toc2.toc-right #toc.toc2{border-right-width:0;border-left:1px solid #efefed;left:auto;right:0}}
+    body.toc2{padding-left:15em;padding-right:0}
+    #toc.toc2{margin-top:0!important;background-color:#f8f8f7;position:fixed;width:15em;left:0;top:0;border-right:1px solid #efefed;border-top-width:0!important;border-bottom-width:0!important;z-index:1000;padding:1.25em 1em;height:100%;overflow:auto}
+    #toc.toc2 #toctitle{margin-top:0;margin-bottom:.8rem;font-size:1.2em}
+    #toc.toc2>ul{font-size:.9em;margin-bottom:0}
+    #toc.toc2 ul ul{margin-left:0;padding-left:1em}
+    #toc.toc2 ul.sectlevel0 ul.sectlevel1{padding-left:0;margin-top:.5em;margin-bottom:.5em}
+    body.toc2.toc-right{padding-left:0;padding-right:15em}
+    body.toc2.toc-right #toc.toc2{border-right-width:0;border-left:1px solid #efefed;left:auto;right:0}}
 @media only screen and (min-width:1280px){body.toc2{padding-left:20em;padding-right:0}
-#toc.toc2{width:20em}
-#toc.toc2 #toctitle{font-size:1.375em}
-#toc.toc2>ul{font-size:.95em}
-#toc.toc2 ul ul{padding-left:1.25em}
-body.toc2.toc-right{padding-left:0;padding-right:20em}}
+    #toc.toc2{width:20em}
+    #toc.toc2 #toctitle{font-size:1.375em}
+    #toc.toc2>ul{font-size:.95em}
+    #toc.toc2 ul ul{padding-left:1.25em}
+    body.toc2.toc-right{padding-left:0;padding-right:20em}}
 #content #toc{border-style:solid;border-width:1px;border-color:#e0e0dc;margin-bottom:1.25em;padding:1.25em;background:#f8f8f7;-webkit-border-radius:4px;border-radius:4px}
 #content #toc>:first-child{margin-top:0}
 #content #toc>:last-child{margin-bottom:0}
@@ -385,36 +385,36 @@ p{margin-bottom:1.25rem}
 .exampleblock>.content{background-color:#fffef7;border-color:#e0e0dc;-webkit-box-shadow:0 1px 4px #e0e0dc;box-shadow:0 1px 4px #e0e0dc}
 .print-only{display:none!important}
 @media print{@page{margin:1.25cm .75cm}
-*{-webkit-box-shadow:none!important;box-shadow:none!important;text-shadow:none!important}
-a{color:inherit!important;text-decoration:underline!important}
-a.bare,a[href^="#"],a[href^="mailto:"]{text-decoration:none!important}
-a[href^="http:"]:not(.bare):after,a[href^="https:"]:not(.bare):after{content:"(" attr(href) ")";display:inline-block;font-size:.875em;padding-left:.25em}
-abbr[title]:after{content:" (" attr(title) ")"}
-pre,blockquote,tr,img,object,svg{page-break-inside:avoid}
-thead{display:table-header-group}
-svg{max-width:100%}
-p,blockquote,dt,td.content{font-size:1em;orphans:3;widows:3}
-h2,h3,#toctitle,.sidebarblock>.content>.title{page-break-after:avoid}
-#toc,.sidebarblock,.exampleblock>.content{background:none!important}
-#toc{border-bottom:1px solid #ddddd8!important;padding-bottom:0!important}
-.sect1{padding-bottom:0!important}
-.sect1+.sect1{border:0!important}
-#header>h1:first-child{margin-top:1.25rem}
-body.book #header{text-align:center}
-body.book #header>h1:first-child{border:0!important;margin:2.5em 0 1em 0}
-body.book #header .details{border:0!important;display:block;padding:0!important}
-body.book #header .details span:first-child{margin-left:0!important}
-body.book #header .details br{display:block}
-body.book #header .details br+span:before{content:none!important}
-body.book #toc{border:0!important;text-align:left!important;padding:0!important;margin:0!important}
-body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-break-before:always}
-.listingblock code[data-lang]:before{display:block}
-#footer{background:none!important;padding:0 .9375em}
-#footer-text{color:rgba(0,0,0,.6)!important;font-size:.9em}
-.hide-on-print{display:none!important}
-.print-only{display:block!important}
-.hide-for-print{display:none!important}
-.show-for-print{display:inherit!important}}
+    *{-webkit-box-shadow:none!important;box-shadow:none!important;text-shadow:none!important}
+    a{color:inherit!important;text-decoration:underline!important}
+    a.bare,a[href^="#"],a[href^="mailto:"]{text-decoration:none!important}
+    a[href^="http:"]:not(.bare):after,a[href^="https:"]:not(.bare):after{content:"(" attr(href) ")";display:inline-block;font-size:.875em;padding-left:.25em}
+    abbr[title]:after{content:" (" attr(title) ")"}
+    pre,blockquote,tr,img,object,svg{page-break-inside:avoid}
+    thead{display:table-header-group}
+    svg{max-width:100%}
+    p,blockquote,dt,td.content{font-size:1em;orphans:3;widows:3}
+    h2,h3,#toctitle,.sidebarblock>.content>.title{page-break-after:avoid}
+    #toc,.sidebarblock,.exampleblock>.content{background:none!important}
+    #toc{border-bottom:1px solid #ddddd8!important;padding-bottom:0!important}
+    .sect1{padding-bottom:0!important}
+    .sect1+.sect1{border:0!important}
+    #header>h1:first-child{margin-top:1.25rem}
+    body.book #header{text-align:center}
+    body.book #header>h1:first-child{border:0!important;margin:2.5em 0 1em 0}
+    body.book #header .details{border:0!important;display:block;padding:0!important}
+    body.book #header .details span:first-child{margin-left:0!important}
+    body.book #header .details br{display:block}
+    body.book #header .details br+span:before{content:none!important}
+    body.book #toc{border:0!important;text-align:left!important;padding:0!important;margin:0!important}
+    body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-break-before:always}
+    .listingblock code[data-lang]:before{display:block}
+    #footer{background:none!important;padding:0 .9375em}
+    #footer-text{color:rgba(0,0,0,.6)!important;font-size:.9em}
+    .hide-on-print{display:none!important}
+    .print-only{display:block!important}
+    .hide-for-print{display:none!important}
+    .show-for-print{display:inherit!important}}
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css">
 </head>
@@ -500,9 +500,45 @@ reduce(k2,list(v2)) -&gt;list(v2)</code></pre>
 </div>
 </div>
 <div class="sect1">
-<h2 id="true-hadoop-hive-lambda"><a class="anchor" href="#true-hadoop-hive-lambda"></a>在 hadoop/hive 生态上兴起的 lambda 架构</h2>
+<h2 id="true-hadoop-hive-lambda-kappa"><a class="anchor" href="#true-hadoop-hive-lambda-kappa"></a>在 hadoop/hive 生态上兴起的 lambda/kappa 架构</h2>
 <div class="sectionbody">
-
+<div class="imageblock">
+<div class="content">
+<img src="lambda-arch.png" alt="lambda arch.png">
+</div>
+<div class="title">Figure 1. lambda architecture</div>
+</div>
+<div class="paragraph">
+<p>lambda 架构之前非常流行，甚至现在在我们这里也非常流行。问题也是显而易见的：</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>在线离线技术栈不同</p>
+</li>
+<li>
+<p>两套代码，两倍人力</p>
+</li>
+<li>
+<p>一个月开发，两个月对数据</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>twitter 尝试解决这个问题，推出了
+<a href="https://github.com/twitter/summingbird">summingbird</a>
+。一套代码编译出在线部分和离线部分。然而功能上只能支持在线/离线交集，且较为复杂，没有流行起来。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="kappa-arch.png" alt="kappa arch.png">
+</div>
+<div class="title">Figure 2. kappa architecture</div>
+</div>
+<div class="paragraph">
+<p>来自这里：
+<a href="https://www.oreilly.com/ideas/questioning-the-lambda-architecture">Questioning the Lambda Architecture</a></p>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -552,17 +588,10 @@ let r_vec: Vec&lt;&amp;str&gt; = rhs
 <p>别看函数调用多，编译器甚至可以对中间某些可以进行合并的操作主动合并，去掉冗余操作，甚至可能比手写的过程式代码性能要好。</p>
 </div>
 <div class="paragraph">
-<p>RDD 操作大全：</p>
+<p><a href="http://homepage.cs.latrobe.edu.au/zhe/ZhenHeSparkRDDAPIExamples.html">RDD 操作大全</a></p>
 </div>
-<div class="quoteblock">
-<blockquote>
 <div class="paragraph">
-<p><a href="http://homepage.cs.latrobe.edu.au/zhe/ZhenHeSparkRDDAPIExamples.html" class="bare">http://homepage.cs.latrobe.edu.au/zhe/ZhenHeSparkRDDAPIExamples.html</a></p>
-</div>
-</blockquote>
-<div class="attribution">
-&#8212; internet
-</div>
+<p>鉴于 Spark 已经日薄西山，为了给自己减负，我们就可以不用学习了。开心。</p>
 </div>
 <div class="paragraph">
 <p>Spark 没风光几年，就被新兴的流式计算框架降维打击了。</p>
@@ -573,7 +602,7 @@ let r_vec: Vec&lt;&amp;str&gt; = rhs
 <h2 id="true-flink"><a class="anchor" href="#true-flink"></a>新兴流式计算框架 Flink</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Flink 的应用场景:</p>
+<p>Flink 在业务上解决了哪些痛点呢？来看看 Flink 官方文档中阐述的三种应用场景:</p>
 </div>
 <div class="sect2">
 <h3 id="true-"><a class="anchor" href="#true-"></a>事件驱动型应用</h3>
@@ -581,6 +610,7 @@ let r_vec: Vec&lt;&amp;str&gt; = rhs
 <div class="content">
 <img src="usecases-eventdrivenapps.png" alt="usecases eventdrivenapps.png">
 </div>
+<div class="title">Figure 3. event driven apps</div>
 </div>
 <div class="paragraph">
 <p>如：</p>
@@ -608,6 +638,7 @@ let r_vec: Vec&lt;&amp;str&gt; = rhs
 <div class="content">
 <img src="usecases-analytics.png" alt="usecases analytics.png">
 </div>
+<div class="title">Figure 4. analytics</div>
 </div>
 <div class="paragraph">
 <p>如：</p>
@@ -620,6 +651,9 @@ let r_vec: Vec&lt;&amp;str&gt; = rhs
 <li>
 <p>司机实时组织化收入大盘</p>
 </li>
+<li>
+<p>司机实时平均 iph</p>
+</li>
 </ul>
 </div>
 </div>
@@ -629,6 +663,7 @@ let r_vec: Vec&lt;&amp;str&gt; = rhs
 <div class="content">
 <img src="usecases-datapipelines.png" alt="usecases datapipelines.png">
 </div>
+<div class="title">Figure 5. data pipelines</div>
 </div>
 <div class="paragraph">
 <p>如：</p>
@@ -644,20 +679,302 @@ let r_vec: Vec&lt;&amp;str&gt; = rhs
 </ul>
 </div>
 <div class="paragraph">
-<p>可见本组有所有流式计算相关的业务需求。</p>
+<p>可见本组拥有所有流式计算相关的业务场景。</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="true--4"><a class="anchor" href="#true--4"></a>流式计算的一些概念</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="truebounded-unbounded"><a class="anchor" href="#truebounded-unbounded"></a>bounded/unbounded</h3>
+<div class="paragraph">
+<p>有界，无界。在离线脚本开始运行时，可以认为某天的数据已经是完整的了，这便是“有界”。</p>
 </div>
 <div class="paragraph">
-<p>相比传统的 hadoop/hive/spark，我们</p>
+<p>而实际上业务并不是这样的。在司机实时成交率计算中，订单在判责结束后，可能会过很久(1-3天)，司机对结果进行申诉。申诉通过后，需要修改计算结果。纯粹的离线系统无法适应这样的场景。</p>
+</div>
+<div class="paragraph">
+<p>源源不断流入的业务领域事件，往往是不会停止的。离线系统只是强行划界而已。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="trueidempotent"><a class="anchor" href="#trueidempotent"></a>idempotent</h3>
+<div class="paragraph">
+<p>幂等性。如一个接口相同的多次调用会得到相同的计算结果。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>incrby 是幂等的么？</p>
+</li>
+<li>
+<p>update order set order_status = finished where order_id = 434453 是幂等的么</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="trueevent-time-vs-processing-time"><a class="anchor" href="#trueevent-time-vs-processing-time"></a>event time vs processing time</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>event time : 事件实际发生的时间</p>
+</li>
+<li>
+<p>processing time : 事件到达后端系统的时间</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>processing time 一般都是有序的(废话)。而 event time 则不一定。流式计算系统一定程度上解决了 event time 乱序的问题。通过什么来解决的呢？</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="truewindow-trigger-evictor"><a class="anchor" href="#truewindow-trigger-evictor"></a>window &amp;&amp; trigger &amp;&amp; evictor</h3>
+<div class="imageblock">
+<div class="content">
+<img src="window.jpg" alt="window.jpg">
+</div>
+<div class="title">Figure 6. window</div>
+</div>
+<div class="paragraph">
+<p>具体含义可以参考 <a href="https://blog.csdn.net/u4110122855/article/details/81360381">这里</a>。</p>
+</div>
+<div class="paragraph">
+<p>在某个 window 结束之后，可以触发 trigger。</p>
+</div>
+<div class="paragraph">
+<p>在Trigger触发之后，在窗口被处理之前，Evictor（如果有Evictor的话）会用来剔除窗口中不需要的元素，相当于一个filter。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="truewatermark"><a class="anchor" href="#truewatermark"></a>watermark</h3>
+<div class="paragraph">
+<p>似乎在论文里叫 barrier&#8230;&#8203;</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="stream_watermark_in_order.svg" alt="stream watermark in order.svg">
+</div>
+<div class="title">Figure 7. 有序事件和 watermark</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="stream_watermark_out_of_order.svg" alt="stream watermark out of order.svg">
+</div>
+<div class="title">Figure 8. 乱序事件和 watermark</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="parallel_streams_watermarks.svg" alt="parallel streams watermarks.svg">
+</div>
+<div class="title">Figure 9. 并行数据流和 watermark</div>
+</div>
+<div class="paragraph">
+<p>可以参考
+<a href="https://blog.csdn.net/Jiny_li/article/details/86516762">这里</a>.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>window 和 watermark 是啥关系？</p>
+</div>
+</td>
+</tr>
+</table>
 </div>
 </div>
 </div>
 </div>
-<h1 id="true--4" class="sect0"><a class="anchor" href="#true--4"></a>流式计算基本概念</h1>
-
+<div class="sect1">
+<h2 id="truelateness"><a class="anchor" href="#truelateness"></a>lateness</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>可能某些特定的元素会违背水印的条件，也就是说即使是Watermark(t)已经发生了，但是还会有许多时间戳t'&#8656;t的事件发生。事实上，在真实的设置中，某些元素可以任意延迟，因此指定一个时间，在这个时间内所有在一个特定事件时间戳的事件都会发生是不可能的。</p>
+</div>
+<div class="paragraph">
+<p>延迟事件到达后可以选择丢弃，还是更新之前的结果。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="trueexactly-once"><a class="anchor" href="#trueexactly-once"></a>exactly-once</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>有且只有一次。并不是那么简单的。</p>
+</div>
+<div class="paragraph">
+<p><a href="https://flink.apache.org/features/2018/03/01/end-to-end-exactly-once-apache-flink.html">end-to-end exactly once</a></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="true--5"><a class="anchor" href="#true--5"></a>流式计算理论基石</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="truemillwheel-paper"><a class="anchor" href="#truemillwheel-paper"></a>millwheel paper</h3>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>MillWheel is a framework for building low-latency data-processing applications that is widely used at Google. Users specify a directed computation graph and application code for individual nodes, and the system manages persistent state and the continuous flow of records, all within the envelope of the framework’s fault-tolerance guarantees.</p>
+</div>
+</blockquote>
+<div class="attribution">
+&#8212; millwheel paper
+</div>
+</div>
+<div class="paragraph">
+<p>重点：用户指定有方向的计算图、每个节点的应用代码。系统负责状态持久化，和数据的流动，框架保证容错。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="truedistributed-snapshot"><a class="anchor" href="#truedistributed-snapshot"></a>distributed snapshot</h3>
+<div class="paragraph">
+<p>leslie lamport 在 80 年代发表的论文，有很多不说人话的地方。主要解决的是一致性的问题。</p>
+</div>
+<div class="paragraph">
+<p>简单来讲，如果在系统内部流动的数据是金额，并且没有外部转入，或者数据转出到外部。每次采集到的快照，能够保证全局总额是不变的。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="lamport_snapshot.png" alt="lamport snapshot.png">
+</div>
+<div class="title">Figure 10. distributed snapshot</div>
+</div>
+<div class="paragraph">
+<p>重点：所有节点和边均有状态。每个节点负责记录自己的状态，以及那些“入边”的状态。所谓的状态，其实就是某种值。</p>
+</div>
+<div class="paragraph">
+<p>有理论支持，流式计算系统才能证明自己的快照从理论上来讲是“正确”的。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="truelightweight-distributed-snapshot"><a class="anchor" href="#truelightweight-distributed-snapshot"></a>lightweight distributed snapshot</h3>
+<div class="paragraph">
+<p>对用户代码进行分析，判断计算图是否有环，分别采用两种算法注入 barrier 并采集全局的 snapshot。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="flink_acyclic_snapshot.png" alt="flink acyclic snapshot.png">
+</div>
+<div class="title">Figure 11. 无环图快照算法</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="cyclic_snapshot-1.png" alt="cyclic snapshot 1.png">
+</div>
+<div class="title">Figure 12. 有环图快照算法</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="truethe-dataflow-model-paper"><a class="anchor" href="#truethe-dataflow-model-paper"></a>The Dataflow Model paper</h3>
+<div class="paragraph">
+<p>这一篇的内容在新书 《Streaming Systems》大多有讲，不用读这个。去读书就好。</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="true--6"><a class="anchor" href="#true--6"></a>流式计算领域的混战</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Spark vs Flink vs Beam。</p>
+</div>
+<div class="paragraph">
+<p>Spark 的理论是，流处理是批处理的特殊情况。</p>
+</div>
+<div class="paragraph">
+<p>Flink 的理论是，批处理是流处理的特殊情况。</p>
+</div>
+<div class="paragraph">
+<p>Beam 的理论是，我全都要：</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="beam_architecture.png" alt="beam architecture.png">
+</div>
+<div class="title">Figure 13. Beam Architecture</div>
+</div>
+<div class="paragraph">
+<p>支持多语言，再翻译成对应的执行任务：</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="beam-runtime.jpg" alt="beam runtime.jpg">
+</div>
+<div class="title">Figure 14. Beam Runtime</div>
+</div>
+<div class="paragraph">
+<p>Pulsar vs Kafka。</p>
+</div>
+<div class="paragraph">
+<p>没时间调研，就不展开说了。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="true--7"><a class="anchor" href="#true--7"></a>课后问题</h2>
+<div class="sectionbody">
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>流式计算框架是怎么保证最终一致的？</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>window、watermark、trigger 是如何协作的</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="coop.jpg" alt="coop.jpg">
+</div>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>window、watermark、trigger 是如何协作的</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2019-07-02 21:11:08 CST
+Last updated 2019-07-03 13:27:45 CST
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/styles/github.min.css">
