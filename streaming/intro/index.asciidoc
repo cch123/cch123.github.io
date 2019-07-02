@@ -1,0 +1,131 @@
+
+
+= 流式计算概述
+
+我们日常开发的系统，可以按照发起请求 -> 收到响应的时间分为三类：
+
+[quote,Designing Data-intensive applications]
+____
+Services (online systems)
+
+服务等待用户请求或指令到达。当收到请求或指令时，服务试图尽可能快地处理它，并发回一个响应。响应时间通常是服务性能的主要衡量指标。而可用性同样非常重要(如果客户端无法访问服务，用户可能会收到一个报错信息)。
+
+Batch processing systems (offline systems)
+
+批处理系统接收大量输入数据，运行一个作业来处理数据，并产生输出数据。作业往往需要执行一段时间(从几分钟到几天)，所以用户通常不会等待作业完成。相反，批量作业通常会定期运行(例如每天一次)。批处理作业的主要性能衡量标准通常是吞吐量(处理一定大小的输入数据集所需的时间)。
+
+Stream processing systems (near-real-time systems)
+
+流处理系统介于在线与离线/批处理之间(所以有时称为近实时或近线处理)。与批处理系统类似，流处理系统处理输入并产生输出(而不是响应请求)。但是，流式作业在事件发生后不久即可对事件进行处理，而批处理作业则使用固定的一组输入数据进行操作。这种差异使得流处理系统比批处理系统具有更低的延迟。**流处理是在批处理的基础上进行的。**
+____
+
+map reduce 基本原理：
+
+[source,c]
+----
+map(k1,v1) ->list(k2,v2)
+reduce(k2,list(v2)) ->list(v2)
+----
+
+可以借鉴其思想实现自己的 map reduce 框架：
+
+[quote, pingcap talent-plan]
+----
+https://github.com/pingcap/talent-plan/tree/master/tidb/mapreduce
+----
+
+更详细的说明可以自行阅读 Google 的 map reduce 论文
+
+map reduce 并不是分布式系统的专利：
+[source,shell]
+----
+cat /var/log/nginx/access.log |
+      awk '{print $7}' |
+      sort             | <1>
+      uniq -c          |
+      sort -r -n       |
+      head -n 5
+----
+
+<1>  sort 工具就会进行外部排序，和 map reduce 过程非常相似。
+
+map reduce api 过于底层，如今离线系统基本不需要再写 map reduce 脚本了。比如我们可以直接写 hive SQL。
+
+== 在 hadoop/hive 生态上兴起的 lambda 架构
+
+== 半路杀出个 Spark
+
+[quote, internet]
+____
+在2014年11月5日举行的Daytona Gray Sort 100TB Benchmark竞赛中，Databricks 用构建于206个运算节点之上的spark运算框架在23分钟内完成100TB数据的排序，一举击败了该赛事2013年的冠军—Yahoo团队建立在2100个运算节点之上的Hadoop MapReduce集群，该集群耗时72分钟排序了102.5TB的数据。换句话说，Spark用了十分之一的资源在三分之一的时间里完成了Hadoop做的事情。
+____
+
+Spark 大量使用内存而非磁盘来存储中间结果，比傻用磁盘的 hadoop 快几十倍是正常的。
+
+除了性能优化之外，Spark 还做了一些抽象:
+
+[quote, spark]
+____
+Spark中每个transform的返回值都是RDD，也就是transform是那些真正转换了RDD的操作，而Action操作会返回结果或把RDD数据写到存储系统中。Spark在遇到Transformations操作时只会记录需要这样的操作，并不会去执行，需要等到有Actions操作的时候才会真正启动计算过程进行计算。
+____
+
+类似于函数式编程中的惰性求值。什么是惰性求值？举个例子：
+
+[source,c]
+----
+let rhs = rhs.replace("\'", "\"");
+let r_vec: Vec<&str> = rhs
+    .trim_left_matches("(")
+    .trim_right_matches(")")
+    .split(",")
+    .map(|v| v.trim())
+    .collect();
+----
+
+别看函数调用多，编译器甚至可以对中间某些可以进行合并的操作主动合并，去掉冗余操作，甚至可能比手写的过程式代码性能要好。
+
+RDD 操作大全：
+
+[quote,internet]
+____
+http://homepage.cs.latrobe.edu.au/zhe/ZhenHeSparkRDDAPIExamples.html
+____
+
+Spark 没风光几年，就被新兴的流式计算框架降维打击了。
+
+== 新兴流式计算框架 Flink
+
+Flink 的应用场景:
+
+=== 事件驱动型应用
+image::usecases-eventdrivenapps.png[]
+
+如：
+
+* 司机实时成交率
+* 司机实时在线时长
+* 司机实时反作弊
+* 实时疲劳驾驶检查
+
+=== 数据分析应用
+image::usecases-analytics.png[]
+
+如：
+
+* 实时 xx/yy/zz 大盘
+* 司机实时组织化收入大盘
+
+=== 数据管道应用
+image::usecases-datapipelines.png[]
+
+如：
+
+* 异步写入的 order feature system 中的所有订单特征
+* 电子商务中的实时查询索引构建
+
+可见本组有所有流式计算相关的业务需求。
+
+相比传统的 hadoop/hive/spark，我们
+
+
+= 流式计算基本概念
