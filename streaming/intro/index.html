@@ -547,7 +547,7 @@ reduce(k2,list(v2)) -&gt;list(v2)</code></pre>
 <div class="quoteblock">
 <blockquote>
 <div class="paragraph">
-<p>在2014年11月5日举行的Daytona Gray Sort 100TB Benchmark竞赛中，Databricks 用构建于206个运算节点之上的spark运算框架在23分钟内完成100TB数据的排序，一举击败了该赛事2013年的冠军—Yahoo团队建立在2100个运算节点之上的Hadoop MapReduce集群，该集群耗时72分钟排序了102.5TB的数据。换句话说，Spark用了十分之一的资源在三分之一的时间里完成了Hadoop做的事情。</p>
+<p>在 2014 年 11 月 5 日举行的 Daytona Gray Sort 100TB Benchmark 竞赛中，Databricks 用构建于 206 个运算节点之上的 Spark 运算框架在 23 分钟内完成 100TB 数据的排序，一举击败了该赛事 2013 年的冠军— Yahoo 团队建立在 2100 个运算节点之上的 Hadoop MapReduce 集群，该集群耗时 72 分钟排序了 102.5TB 的数据。换句话说，Spark 用了十分之一的资源在三分之一的时间里完成了 Hadoop 做的事情。</p>
 </div>
 </blockquote>
 <div class="attribution">
@@ -558,12 +558,22 @@ reduce(k2,list(v2)) -&gt;list(v2)</code></pre>
 <p>Spark 大量使用内存而非磁盘来存储中间结果，比傻用磁盘的 hadoop 快几十倍是正常的。</p>
 </div>
 <div class="paragraph">
-<p>除了性能优化之外，Spark 还做了一些抽象:</p>
+<p>除了性能优化之外，Spark 还做了一些抽象，这里面最重要的便是 RDD：</p>
 </div>
 <div class="quoteblock">
 <blockquote>
 <div class="paragraph">
-<p>Spark中每个transform的返回值都是RDD，也就是transform是那些真正转换了RDD的操作，而Action操作会返回结果或把RDD数据写到存储系统中。Spark在遇到Transformations操作时只会记录需要这样的操作，并不会去执行，需要等到有Actions操作的时候才会真正启动计算过程进行计算。</p>
+<p>RDD(Resilient Distributed Datasets) ，弹性分布式数据集， 是分布式内存的一个抽象概念，RDD 提供了一种高度受限的共享内存模型，即 RDD 是只读的记录分区的集合，只能通过在其他 RDD 执行确定的转换操作（如 map、join 和 group by）而创建，然而这些限制使得实现容错的开销很低。对开发者而言，RDD 可以看作是 Spark 的一个对象，它本身运行于内存中，如读文件是一个 RDD，对文件计算是一个 RDD，结果集也是一个 RDD ，不同的分片、 数据之间的依赖 、key-value 类型的 map 数据都可以看做 RDD。</p>
+</div>
+</blockquote>
+<div class="attribution">
+&#8212; 百科
+</div>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Spark 中每个 transform 的返回值都是 RDD，也就是 transform 是那些真正转换了RDD的操作，而 Action 操作会返回结果或把RDD数据写到存储系统中。Spark 在遇到 Transformations 操作时只会记录需要这样的操作，并不会去执行，需要等到有 Actions 操作的时候才会真正启动计算过程进行计算。</p>
 </div>
 </blockquote>
 <div class="attribution">
@@ -974,7 +984,7 @@ let r_vec: Vec&lt;&amp;str&gt; = rhs
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2019-07-03 13:27:45 CST
+Last updated 2019-07-03 13:33:29 CST
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/styles/github.min.css">
