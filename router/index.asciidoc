@@ -1,0 +1,41 @@
+= http router
+
+== http router 是什么
+
+从功能上来讲，就是 URI -> handler 函数的映射。
+
+[ditaa,file="url_to_handler.png"]
+----
+                                                 +------------------------------------------------------+
+                                                 |func sayhello(wr http.ResponseWriter, r #http.Request)|
++------------------------------+                 |{                                                     |
+|/superstar/jay/albums/#:id    |---------------->|    io.WriteString(wr, "fantasy")                     |
++------------------------------+                 |}                                                     |
+|/superstar/cxk/skills         |--------+        +------------------------------------------------------+
++------------------------------+        |                                                                
+                                        |                                                                
+                                        |                                                                
+                                        |        +------------------------------------------------------+
+                                        |        |func sayhello(wr http.ResponseWriter, r #http.Request)|
+                                        |        |{                                                     |
+                                        +------->|    io.WriteString(wr, "sing dance rap basketball")   |
+                                                 |}                                                     |
+                                                 +------------------------------------------------------+
+----
+
+== http router 构造
+=== 普通的 trie
+
+=== radix tree
+
+=== 多棵 radix tree
+
+== 正则路由与非正则路由
+
+=== 功能对比
+
+=== 性能对比
+
+== 路由层的性能有意义么?
+
+
