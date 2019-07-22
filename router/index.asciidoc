@@ -26,9 +26,68 @@
 == http router 构造
 === 普通的 trie
 
+image::trie.png[]
+
+* 单个节点代表一个字母
+* 如果需要对字符串进行匹配
+* 只要从根节点开始依次匹配即可
+
+普通的 trie 有什么缺点呢？
+
+[quote,Wikipedia, 最长的英文单词]
+____
+在主要的英文字典中，最长的单词是pneumonoultramicroscopicsilicovolcanoconiosis，由45个字母组成，意思是一种肺部疾病（由于吸入超显微硅酸盐及石英尘所引起的）肺尘埃沉着病”，通称火山矽肺病。其中，pneumo-表示“肺”，ultra-表示“超”，microscopic意为“微观”，silico-表示“硅”，volcano指“火山”，coni-意思是“尘”，-osis为表示疾病的后缀。后来研究者认为这是一个大骗局。
+____
+
+* 树的深度和字符串长度正相关
+* 占用较多的内存
+* 字符串越长，匹配越慢(类似链表结构，在内存中存储不连续的数据)
+
 === radix tree
 
+[quote,Wikipedia]
+____
+In computer science, a radix tree (also radix trie or compact prefix tree) is a data structure that represents a space-optimized trie (prefix tree) in which each node that is the only child is merged with its parent. The result is that the number of children of every internal node is at most the radix r of the radix tree, where r is a positive integer and a power x of 2, having x ≥ 1. Unlike regular tries, edges can be labeled with sequences of elements as well as single elements. This makes radix trees much more efficient for small sets (especially if the strings are long) and for sets of strings that share long prefixes.
+____
+
+在 http 路由的场景下 一棵 radix tree 是不够用的 为什么呢?
+
+==== restful 风格路由
+
+[ditaa,file="entries.png"]
+----
+                                        +------------+
+                              +-------->|    GET     |
+                              |         +------------+
+                              +-------->|    PUT     |
++--------------------+        |         +------------+
+|   /user/#id/info   |--------+-------->|    POST    |
++--------------------+        |         +------------+
+                              +-------->|   PATCH    |
+                              |         +------------+
+                              +-------->|   DELETE   |
+                                        +------------+
+----
+
+怎么解决这个问题呢？
+
 === 多棵 radix tree
+
+GET 一棵，PUT 一棵，POST 一棵，以此类推：
+
+== httprouter 中的一些概念
+
+=== node
+
+=== wildChild
+
+=== catchAll
+
+== httprouter 中 radix tree 的构造过程
+
+== 路由冲突
+
+== 一些注意事项
 
 == 正则路由与非正则路由
 
@@ -38,4 +97,6 @@
 
 == 路由层的性能有意义么?
 
+https://github.com/smallnest/go-web-framework-benchmark
 
+image::benchmark_latency.png[]
