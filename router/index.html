@@ -558,9 +558,59 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect2">
+<h3 id="truentype"><a class="anchor" href="#truentype"></a>nType</h3>
+<div class="paragraph">
+<p>就是 node type，有几种枚举值：</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>static                   // 非根节点的普通字符串节点</p>
+</li>
+<li>
+<p>root                     // 根节点</p>
+</li>
+<li>
+<p>param(wildcard)          // 参数节点，例如 :id</p>
+</li>
+<li>
+<p>catchAll                 // 通配符节点，例如 *anyway</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="truepath"><a class="anchor" href="#truepath"></a>path</h3>
+<div class="paragraph">
+<p>到达节点时，所经过的字符串路径。</p>
+</div>
+<div class="paragraph">
+<p>TODO，图</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="trueindices"><a class="anchor" href="#trueindices"></a>indices</h3>
+<div class="paragraph">
+<p>子节点索引，当子节点为非参数类型，即本节点的 wildChild 为 false 时，会将每个子节点的首字母放在该索引数组。说是数组，实际上是个 string。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="indices.png" alt="indices">
+</div>
+</div>
+<div class="paragraph">
+<p>如果子节点为参数节点时，indices 应该是个空字符串。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="indices2.png" alt="indices2">
+</div>
+</div>
+</div>
+<div class="sect2">
 <h3 id="truewildchild"><a class="anchor" href="#truewildchild"></a>wildChild</h3>
 <div class="paragraph">
-<p>如果一个节点的子节点中有 wildCard 节点，那么该节点的 wildChild 字段即为 true。</p>
+<p>如果一个节点的子节点中有 param(wildcard) 节点，那么该节点的 wildChild 字段即为 true。</p>
 </div>
 </div>
 <div class="sect2">
@@ -577,17 +627,46 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sect1">
 <h2 id="truehttprouter-中-radix-tree-的构造过程"><a class="anchor" href="#truehttprouter-中-radix-tree-的构造过程"></a>httprouter 中 radix tree 的构造过程</h2>
 <div class="sectionbody">
-
+<div class="paragraph">
+<p>假设我们先后插入三条路由，这些路由都用相同的 http method(GET)</p>
+</div>
+<div class="sect2">
+<h3 id="true第一条路由"><a class="anchor" href="#true第一条路由"></a>第一条路由</h3>
+<div class="imageblock">
+<div class="content">
+<img src="node_insert1.png" alt="node insert1">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="true第二条路由"><a class="anchor" href="#true第二条路由"></a>第二条路由</h3>
+<div class="imageblock">
+<div class="content">
+<img src="node_insert2.png" alt="node insert2">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="true第三条路由"><a class="anchor" href="#true第三条路由"></a>第三条路由</h3>
+<div class="imageblock">
+<div class="content">
+<img src="node_insert3.png" alt="node insert3">
+</div>
+</div>
+<div class="paragraph">
+<p>经过相同的父节点，且不发生冲突时，插入路由可能会造成边分裂。</p>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="true路由冲突"><a class="anchor" href="#true路由冲突"></a>路由冲突</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>路由发生冲突，主要是 wildCard 节点、catchAll 节点和字符串节点的冲突，例如：</p>
+<p>路由发生冲突，主要是 static 节点、param 节点、catchAll 节点之间冲突，例如：</p>
 </div>
 <div class="sect2">
-<h3 id="truecase-1"><a class="anchor" href="#truecase-1"></a>case 1</h3>
+<h3 id="true一个例子"><a class="anchor" href="#true一个例子"></a>一个例子</h3>
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code data-lang="c" class="language-c hljs">conflict:
@@ -596,7 +675,7 @@ GET /user/:id</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>为什么会冲突呢？因为 wildCard 和普通字符串节点是没有办法共存的。例如输入路由字符串为：<code>/user/info</code>，在 <code>/user/:id</code> 规则中，info 会被解释为 :id 的值。</p>
+<p>为什么会冲突呢？因为 param 节点和普通字符串节点是没有办法共存的。例如输入路由字符串为：<code>/user/info</code>，在 <code>/user/:id</code> 规则中，info 会被解释为 :id 的值。</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -610,9 +689,49 @@ POST /user/:id</code></pre>
 </div>
 </div>
 <div class="sect2">
-<h3 id="truecase-2"><a class="anchor" href="#truecase-2"></a>case 2</h3>
+<h3 id="true所有情况"><a class="anchor" href="#true所有情况"></a>所有情况</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>在插入 wildcard 节点时，父节点的 children 数组非空且 wildChild 被设置为 false。例如：GET /user/getAll 和 GET /user/:id/getAddr，或者 GET /user/*aaa和 GET /user/:id。</p>
+</li>
+<li>
+<p>在插入 wildcard 节点时，父节点的 children 数组非空且 wildChild 被设置为 true，但该父节点的 wildcard 子节点要插入的 wildcard 名字不一样。例如： GET /user/:id/info 和 GET /user/:name/info。</p>
+</li>
+<li>
+<p>在插入 catchAll 节点时，父节点的 children 非空。例如： GET /src/abc 和 GET /src/*filename，或者 GET /src/:id 和 GET /src/*filename。</p>
+</li>
+<li>
+<p>在插入 static 节点时，父节点的 wildChild 字段被设置为 true。</p>
+</li>
+<li>
+<p>在插入 static 节点时，父节点的 children 非空，且子节点 nType 为 catchAll。</p>
+</li>
+</ul>
+</div>
 <div class="paragraph">
-<p>TODO</p>
+<p>很好理解，能看懂下面这张图就行：</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="exclusive.png" alt="exclusive">
+</div>
+</div>
+<div class="paragraph">
+<p>即同一个节点，其子节点的情况只可能是：</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>一个 wildcard 节点</p>
+</li>
+<li>
+<p>一个 catchAll 节点</p>
+</li>
+<li>
+<p>一个或多个 static 节点</p>
+</li>
+</ul>
 </div>
 </div>
 </div>
@@ -652,7 +771,7 @@ POST /user/:id</code></pre>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2019-07-22 18:47:40 +0800
+Last updated 2019-07-23 17:04:49 +0800
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/github.min.css">
