@@ -123,7 +123,7 @@ GET 一棵，PUT 一棵，POST 一棵，以此类推：
 
 到达节点时，所经过的字符串路径。
 
-TODO，图
+image::path.png[]
 
 === indices
 
@@ -141,9 +141,9 @@ image::indices2.png[]
 
 === catchAll
 
-TODO
+以 `*` 结尾的路由，即为 catchAll。在静态文件服务上，catchAll 用的比较多。后面的部分一般用来描述文件路径。如：/software/downloads/monodraw-latest.dmg。
 
-以 `*` 结尾的路由，即为 catchAll
+得到后缀之后，就可以知道文件路径了。当然，现在的服务端文件系统可能是虚拟目录。看具体的实现了。
 
 == httprouter 中 radix tree 的构造过程
 
@@ -222,21 +222,60 @@ POST /user/:id
 * 一个 catchAll 节点
 * 一个或多个 static 节点
 
-== 一些注意事项
+== 路由功能扩展
 
-== 正则路由与非正则路由
+上面我们看到，httprouter 中只有 static/param/checkAll 这三种节点。有一部分人认为功能不够强大。
 
-=== 功能对比
+我们可以思考如何对标准的 httprouter 功能进行扩展。
 
-=== 性能对比
+目前 param 节点和 static 节点无法共存，如果我们想让 param 和 static 可以共存的话呢？
 
-== 路由层的性能有意义么?
+* /cars/{id : \d+}
+* /cars/f1
+
+上面这两条路由显然是可以共存的，我们可以先匹配 /cars/f1，不匹配的情况下再去尝试匹配 /cars/{id: \d+}，都不匹配，则 404。
+
+想实现这个功能也不难，可以自行尝试。
+
+== 路由库性能相关的评测
+
+https://github.com/julienschmidt/go-http-routing-benchmark
+
+https://github.com/julienschmidt/go-http-routing-benchmark/pull/82
 
 https://github.com/smallnest/go-web-framework-benchmark
 
+https://www.reddit.com/r/golang/comments/71i2oh/how_are_various_routers_are_faster_than_each_other/
+
 image::benchmark_latency.png[]
 
+[TIP]
+====
+路由的性能对我们的线上项目有多大影响呢?
+====
+
+== 其它路由项目
+
+上面的 benchmark 里有，简单扫了扫代码，功能其实都差不多。
+
+== 注意事项
+
+httprouter 在路径中的 param 节点不能超过 255，这个结论怎么得到的呢？可以看看代码。
+
+== 拓展阅读：RESTFul 和 GraphQL 之争
+
+https://www.howtographql.com/basics/1-graphql-is-the-better-rest/
+
+看看就行了。该 post 一把梭的时候连 RESTFul 都不用，更不用说 GraphQL 了。
+
+对于有些公司的人来说，RESTFul 都接不利索(比如 Go 标准库中的 http client，用 PUT/PATCH 之类的方法就很不方便，开源的 http client 各种 bug)。
 
 == Go 夜读调查问卷
 
 image::survay.png[]
+
+
+[quote, reddit]
+____
+Please do not obsess over routers. Their difference in speed, if any, is negligible compared to the network and disk IO of a standard web app. Just pick one and move on.
+____

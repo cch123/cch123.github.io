@@ -584,8 +584,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="paragraph">
 <p>到达节点时，所经过的字符串路径。</p>
 </div>
-<div class="paragraph">
-<p>TODO，图</p>
+<div class="imageblock">
+<div class="content">
+<img src="path.png" alt="path">
+</div>
 </div>
 </div>
 <div class="sect2">
@@ -616,10 +618,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sect2">
 <h3 id="truecatchall"><a class="anchor" href="#truecatchall"></a>catchAll</h3>
 <div class="paragraph">
-<p>TODO</p>
+<p>以 <code>*</code> 结尾的路由，即为 catchAll。在静态文件服务上，catchAll 用的比较多。后面的部分一般用来描述文件路径。如：/software/downloads/monodraw-latest.dmg。</p>
 </div>
 <div class="paragraph">
-<p>以 <code>*</code> 结尾的路由，即为 catchAll</p>
+<p>得到后缀之后，就可以知道文件路径了。当然，现在的服务端文件系统可能是虚拟目录。看具体的实现了。</p>
 </div>
 </div>
 </div>
@@ -737,34 +739,98 @@ POST /user/:id</code></pre>
 </div>
 </div>
 <div class="sect1">
-<h2 id="true一些注意事项"><a class="anchor" href="#true一些注意事项"></a>一些注意事项</h2>
-<div class="sectionbody">
-
-</div>
-</div>
-<div class="sect1">
-<h2 id="true正则路由与非正则路由"><a class="anchor" href="#true正则路由与非正则路由"></a>正则路由与非正则路由</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="true功能对比"><a class="anchor" href="#true功能对比"></a>功能对比</h3>
-
-</div>
-<div class="sect2">
-<h3 id="true性能对比"><a class="anchor" href="#true性能对比"></a>性能对比</h3>
-
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="true路由层的性能有意义么"><a class="anchor" href="#true路由层的性能有意义么"></a>路由层的性能有意义么?</h2>
+<h2 id="true路由功能扩展"><a class="anchor" href="#true路由功能扩展"></a>路由功能扩展</h2>
 <div class="sectionbody">
 <div class="paragraph">
+<p>上面我们看到，httprouter 中只有 static/param/checkAll 这三种节点。有一部分人认为功能不够强大。</p>
+</div>
+<div class="paragraph">
+<p>我们可以思考如何对标准的 httprouter 功能进行扩展。</p>
+</div>
+<div class="paragraph">
+<p>目前 param 节点和 static 节点无法共存，如果我们想让 param 和 static 可以共存的话呢？</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>/cars/{id : \d+}</p>
+</li>
+<li>
+<p>/cars/f1</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>上面这两条路由显然是可以共存的，我们可以先匹配 /cars/f1，不匹配的情况下再去尝试匹配 /cars/{id: \d+}，都不匹配，则 404。</p>
+</div>
+<div class="paragraph">
+<p>想实现这个功能也不难，可以自行尝试。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="true路由库性能相关的评测"><a class="anchor" href="#true路由库性能相关的评测"></a>路由库性能相关的评测</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="https://github.com/julienschmidt/go-http-routing-benchmark" class="bare">https://github.com/julienschmidt/go-http-routing-benchmark</a></p>
+</div>
+<div class="paragraph">
+<p><a href="https://github.com/julienschmidt/go-http-routing-benchmark/pull/82" class="bare">https://github.com/julienschmidt/go-http-routing-benchmark/pull/82</a></p>
+</div>
+<div class="paragraph">
 <p><a href="https://github.com/smallnest/go-web-framework-benchmark" class="bare">https://github.com/smallnest/go-web-framework-benchmark</a></p>
+</div>
+<div class="paragraph">
+<p><a href="https://www.reddit.com/r/golang/comments/71i2oh/how_are_various_routers_are_faster_than_each_other/" class="bare">https://www.reddit.com/r/golang/comments/71i2oh/how_are_various_routers_are_faster_than_each_other/</a></p>
 </div>
 <div class="imageblock">
 <div class="content">
 <img src="benchmark_latency.png" alt="benchmark latency">
 </div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>路由的性能对我们的线上项目有多大影响呢?</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="true其它路由项目"><a class="anchor" href="#true其它路由项目"></a>其它路由项目</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>上面的 benchmark 里有，简单扫了扫代码，功能其实都差不多。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="true注意事项"><a class="anchor" href="#true注意事项"></a>注意事项</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>httprouter 在路径中的 param 节点不能超过 255，这个结论怎么得到的呢？可以看看代码。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="true拓展阅读restful-和-graphql-之争"><a class="anchor" href="#true拓展阅读restful-和-graphql-之争"></a>拓展阅读：RESTFul 和 GraphQL 之争</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="https://www.howtographql.com/basics/1-graphql-is-the-better-rest/" class="bare">https://www.howtographql.com/basics/1-graphql-is-the-better-rest/</a></p>
+</div>
+<div class="paragraph">
+<p>看看就行了。该 post 一把梭的时候连 RESTFul 都不用，更不用说 GraphQL 了。</p>
+</div>
+<div class="paragraph">
+<p>对于有些公司的人来说，RESTFul 都接不利索(比如 Go 标准库中的 http client，用 PUT/PATCH 之类的方法就很不方便，开源的 http client 各种 bug)。</p>
 </div>
 </div>
 </div>
@@ -776,12 +842,22 @@ POST /user/:id</code></pre>
 <img src="survay.png" alt="survay">
 </div>
 </div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Please do not obsess over routers. Their difference in speed, if any, is negligible compared to the network and disk IO of a standard web app. Just pick one and move on.</p>
+</div>
+</blockquote>
+<div class="attribution">
+&#8212; reddit
+</div>
+</div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2019-07-24 17:17:41 +0800
+Last updated 2019-07-25 12:43:51 +0800
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/github.min.css">
