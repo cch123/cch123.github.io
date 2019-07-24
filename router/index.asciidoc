@@ -37,10 +37,10 @@ image::trie.png[]
 
 [quote,Wikipedia, 最长的英文单词]
 ____
-在主要的英文字典中，最长的单词是pneumonoultramicroscopicsilicovolcanoconiosis，由45个字母组成，意思是一种肺部疾病（由于吸入超显微硅酸盐及石英尘所引起的）肺尘埃沉着病”，通称火山矽肺病。其中，pneumo-表示“肺”，ultra-表示“超”，microscopic意为“微观”，silico-表示“硅”，volcano指“火山”，coni-意思是“尘”，-osis为表示疾病的后缀。后来研究者认为这是一个大骗局。
+在主要的英文字典中，最长的单词是 pneumonoultramicroscopicsilicovolcanoconiosis，由45个字母组成，意思是一种肺部疾病（由于吸入超显微硅酸盐及石英尘所引起的）肺尘埃沉着病”，通称火山矽肺病。其中，pneumo-表示“肺”，ultra-表示“超”，microscopic意为“微观”，silico-表示“硅”，volcano指“火山”，coni-意思是“尘”，-osis为表示疾病的后缀。后来研究者认为这是一个大骗局。
 ____
 
-* 树的深度和字符串长度正相关
+* 树的深度和路由字符串长度正相关
 * 占用较多的内存
 * 字符串越长，匹配越慢(类似链表结构，在内存中存储不连续的数据)
 
