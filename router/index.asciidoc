@@ -235,3 +235,8 @@ POST /user/:id
 https://github.com/smallnest/go-web-framework-benchmark
 
 image::benchmark_latency.png[]
+
+
+== Go 夜读调查问卷
+
+image::survay.png[]
