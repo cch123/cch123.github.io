@@ -314,7 +314,8 @@ BenchmarkHttpRouter_Param           20000000        139 ns/op          33 B/op  
 
 [source,c]
 ----
-BenchmarkGin_GithubStatic               10000000               156 ns/op               0 B/op          0 allocs/op
+BenchmarkGin_Param                      20000000               113 ns/op               0 B/op          0 allocs/op
+
 ----
 
 Gin 用的也是 httprouter，但是为什么这里却是 0 alloc 呢？答案很弱智，sync.Pool：
