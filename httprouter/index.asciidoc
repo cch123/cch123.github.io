@@ -217,7 +217,7 @@ POST /user/:id
      |                                               |      
      v                                               v      
 +--------+                                     +----------+ 
-| static |                                     | catchAll | 
+| static |                                     |   param  | 
 +--------+                                     +----------+ 
      ^                                               ^      
      |                     exclusive                 |      
