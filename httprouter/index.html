@@ -864,21 +864,39 @@ POST /user/:id</code></pre>
 <div class="paragraph">
 <p>分享过程中有同学问的没有回答的两个问题：</p>
 </div>
-<div class="olist upperalpha">
-<ol class="upperalpha" type="A">
-<li>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<div class="paragraph">
 <p>httprouter 是不是不支持 /:hashcode 这种路由？</p>
-</li>
-<li>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
 <p>是支持的，必须以 / 开头才行</p>
-</li>
-<li>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<div class="paragraph">
 <p>这些路由的 zero garbage 和 0 alloc 是咋实现的？</p>
-</li>
-<li>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
 <p>zero garbage 指进程不在堆上分配内存。http router 实现了全静态路由时，匹配过程 0 alloc，这里的 0 次分配其实就是没有堆内存分配(栈上的肯定还是有的，但栈上分配内存不影响 GC)。</p>
-</li>
-</ol>
 </div>
 <div class="paragraph">
 <p>但 httprouter 在路由中含有参数时，会额外分配一个 Params 的 slice，提供给用户的 handler 来使用。所以可以看到，带参数的路由在 httprouter 的 benchmark 中有 alloc：</p>
@@ -923,7 +941,7 @@ type Engine struct {
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2019-07-26 15:39:13 +0800
+Last updated 2019-07-26 15:42:06 +0800
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/github.min.css">

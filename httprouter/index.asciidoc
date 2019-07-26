@@ -289,11 +289,19 @@ ____
 
 分享过程中有同学问的没有回答的两个问题：
 
-Q. httprouter 是不是不支持 /:hashcode 这种路由？
-A. 是支持的，必须以 / 开头才行
+[TIP]
+====
+httprouter 是不是不支持 /:hashcode 这种路由？
+====
 
-Q. 这些路由的 zero garbage 和 0 alloc 是咋实现的？
-A. zero garbage 指进程不在堆上分配内存。http router 实现了全静态路由时，匹配过程 0 alloc，这里的 0 次分配其实就是没有堆内存分配(栈上的肯定还是有的，但栈上分配内存不影响 GC)。
+是支持的，必须以 / 开头才行
+
+[TIP]
+====
+这些路由的 zero garbage 和 0 alloc 是咋实现的？
+====
+
+zero garbage 指进程不在堆上分配内存。http router 实现了全静态路由时，匹配过程 0 alloc，这里的 0 次分配其实就是没有堆内存分配(栈上的肯定还是有的，但栈上分配内存不影响 GC)。
 
 但 httprouter 在路由中含有参数时，会额外分配一个 Params 的 slice，提供给用户的 handler 来使用。所以可以看到，带参数的路由在 httprouter 的 benchmark 中有 alloc：
 
