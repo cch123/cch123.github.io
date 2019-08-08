@@ -4,6 +4,19 @@
 
 = Streaming 101
 
+== 预习题
+
+判断对错:
+
+[TIP]
+Fixed window 是 Sliding window 的特殊情况
+
+[TIP]
+有了 Window 我们就能完美地解决 window 内的数据完整性问题了
+
+[TIP]
+Session 指的是一个用户在平台上所有行为的集合，可以包含很长时间的数据(月、年)
+
 == 背景
 
 https://www.oreilly.com/ideas/the-world-beyond-batch-streaming-101[Streaming 101] 和 https://www.oreilly.com/ideas/the-world-beyond-batch-streaming-102[Streaming 102] 是作者原先发表在出版社 oreily 网站上的两篇文章。
@@ -309,3 +322,4 @@ To summarize, in this post I’ve:
 * Proposed two high-level concepts necessary for streaming systems to both catch up to and ultimately surpass batch, those being correctness and tools for reasoning about time, respectively.
 * Established the important differences between event time and processing time, characterized the difficulties those differences impose when analyzing data in the context of when they occurred, and proposed a shift in approach away from notions of completeness and toward simply adapting to changes in data over time.
 * Looked at the major data processing approaches in common use today for bounded and unbounded data, via both batch and streaming engines, roughly categorizing the unbounded approaches into: time-agnostic, approximation, windowing by processing time, and windowing by event time.
+

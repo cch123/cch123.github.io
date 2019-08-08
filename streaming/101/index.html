@@ -424,7 +424,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#true-">背景</a></li>
+<li><a href="#true-">预习题</a></li>
+<li><a href="#true--2">背景</a></li>
 <li><a href="#true-business-requirements">商业/业务需求(Business Requirements)</a></li>
 <li><a href="#true-terminology">名词(terminology)</a>
 <ul class="sectlevel2">
@@ -444,21 +445,21 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <ul class="sectlevel2">
 <li><a href="#trueevent-time">Event Time</a></li>
 <li><a href="#trueprocessing-time">Processing Time</a></li>
-<li><a href="#true--2">两种时间不一致的原因</a></li>
+<li><a href="#true--3">两种时间不一致的原因</a></li>
 </ul>
 </li>
-<li><a href="#true--3">常见数据处理模式</a>
+<li><a href="#true--4">常见数据处理模式</a>
 <ul class="sectlevel2">
-<li><a href="#true--4">有界数据处理</a></li>
-<li><a href="#true--5">无界数据处理</a>
+<li><a href="#true--5">有界数据处理</a></li>
+<li><a href="#true--6">无界数据处理</a>
 <ul class="sectlevel3">
-<li><a href="#true--6">无界数据处理-批式</a>
+<li><a href="#true--7">无界数据处理-批式</a>
 <ul class="sectlevel4">
 <li><a href="#truefixed-windows">Fixed windows</a></li>
 <li><a href="#truesessions">Sessions</a></li>
 </ul>
 </li>
-<li><a href="#true--7">无界数据处理-流式</a>
+<li><a href="#true--8">无界数据处理-流式</a>
 <ul class="sectlevel4">
 <li><a href="#truetime-agnostic">Time-agnostic</a></li>
 <li><a href="#trueapproximation-algorithms">Approximation algorithms</a></li>
@@ -476,7 +477,51 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="true-"><a class="anchor" href="#true-"></a>背景</h2>
+<h2 id="true-"><a class="anchor" href="#true-"></a>预习题</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>判断对错:</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Fixed window 是 Sliding window 的特殊情况
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+有了 Window 我们就能完美地解决 window 内的数据完整性问题了
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Session 指的是一个用户在平台上所有行为的集合，可以包含很长时间的数据(月、年)
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="true--2"><a class="anchor" href="#true--2"></a>背景</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p><a href="https://www.oreilly.com/ideas/the-world-beyond-batch-streaming-101">Streaming 101</a> 和 <a href="https://www.oreilly.com/ideas/the-world-beyond-batch-streaming-102">Streaming 102</a> 是作者原先发表在出版社 oreily 网站上的两篇文章。</p>
@@ -687,7 +732,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect2">
-<h3 id="true--2"><a class="anchor" href="#true--2"></a>两种时间不一致的原因</h3>
+<h3 id="true--3"><a class="anchor" href="#true--3"></a>两种时间不一致的原因</h3>
 <div class="ulist">
 <ul>
 <li>
@@ -729,10 +774,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect1">
-<h2 id="true--3"><a class="anchor" href="#true--3"></a>常见数据处理模式</h2>
+<h2 id="true--4"><a class="anchor" href="#true--4"></a>常见数据处理模式</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="true--4"><a class="anchor" href="#true--4"></a>有界数据处理</h3>
+<h3 id="true--5"><a class="anchor" href="#true--5"></a>有界数据处理</h3>
 <div class="paragraph">
 <p>处理有界数据很简单直接，对大多数人来说都比较熟悉。</p>
 </div>
@@ -747,9 +792,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect2">
-<h3 id="true--5"><a class="anchor" href="#true--5"></a>无界数据处理</h3>
+<h3 id="true--6"><a class="anchor" href="#true--6"></a>无界数据处理</h3>
 <div class="sect3">
-<h4 id="true--6"><a class="anchor" href="#true--6"></a>无界数据处理-批式</h4>
+<h4 id="true--7"><a class="anchor" href="#true--7"></a>无界数据处理-批式</h4>
 <div class="paragraph">
 <p>批处理系统并不是为无界数据设计的，但因为发明的早，被人们用来处理无界数据。</p>
 </div>
@@ -794,7 +839,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect3">
-<h4 id="true--7"><a class="anchor" href="#true--7"></a>无界数据处理-流式</h4>
+<h4 id="true--8"><a class="anchor" href="#true--8"></a>无界数据处理-流式</h4>
 <div class="paragraph">
 <p>相比基于批处理针对无界数据的特殊定制，流式系统本身就是为无界数据设计的。真实世界中，数据不只是无界，还有下面这些特性:</p>
 </div>
@@ -1026,7 +1071,7 @@ Windowing by event time 按事件时间分窗口</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2019-08-08 17:37:36 CST
+Last updated 2019-08-08 17:47:36 CST
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/styles/github.min.css">
