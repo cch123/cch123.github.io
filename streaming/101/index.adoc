@@ -12,7 +12,7 @@
 Fixed window 是 Sliding window 的特殊情况
 
 [TIP]
-有了 Window 我们就能完美地解决 window 内的数据完整性问题了
+有了基于 event time 的 Window 我们就能完美地解决 window 内的数据完整性问题了
 
 [TIP]
 Session 指的是一个用户在平台上所有行为的集合，可以包含很长时间的数据(月、年)
