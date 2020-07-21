@@ -59,7 +59,7 @@ TODO，这里有图，circuit breaker，ratelimit 模块本来在 web 框架中 
 
 === 协议太多
 
-就像 RPC 框架万年统一不了一样，一个公共的流量层就需要去对接五花八门的各种协议：
+就像 RPC 框架万年统一不了一样，一个公共的流量层就需要去对接五花八门的协议：
 
 * HTTP
 * HTTP/2
@@ -79,7 +79,42 @@ TODO，这里有图，circuit breaker，ratelimit 模块本来在 web 框架中 
 * redis 协议
 * MySQL 协议
 
+image::pingpong.png[]
+
+这种模型比较简单，实现客户端也简单：
+
+encode payload -> write data to connection -> read block until data ready -> decode
+
 ====  multiplex
+
+向连接发送请求完毕后，不用等待响应就可以继续发送请求。
+
+image::multiplex.png[]
+
+对于客户端来说，比以前复杂了，请求和响应处理不是顺序流程，所以一般会有一个 map 来记录请求和响应的关系：
+
+[source,c]
+----
+type http2ClientConn struct {
+	....
+	streams         map[uint32]*http2clientStream // 就是这里
+	nextStreamID    uint32
+	....
+}
+----
+
+响应解析完毕后，用 stream id 去 map 里找到对应的 request 并唤醒相应的 client。
+
+这种响应模型在 Go 里还是比较容易想到怎么做的，我们只要在 stream 对象里放一个 channel 就行了：
+
+[source,c]
+----
+type http2clientStream struct {
+	....
+	resc          chan http2resAndError // 就是这里
+	....
+}
+----
 
 === 政治问题
 
@@ -88,3 +123,4 @@ OUC 基金会，伪开源。
 从不好的方面来讲，很多公司所谓的借助社区力量，其实就是把大家当成不要钱的外包员工。
 
 当然，我们可以换一个说法，如果你给一家公司的开源项目贡献了大量的代码，是有机会通过这个过程直接进入这家公司工作的。
+

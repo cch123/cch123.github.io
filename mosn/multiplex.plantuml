@@ -1,0 +1,12 @@
+@startuml multiplex
+
+client -> server : request 1
+client -> server : request 2
+client -> server : request 3
+client -> server : request 4
+server -> client : response 2
+server -> client : response 3
+server -> client : response 1
+server -> client : response 4
+
+@enduml

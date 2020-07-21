@@ -1,0 +1,10 @@
+@startuml pingpong
+
+client -> server : request
+server -> client : response
+client -> server : request
+server -> client : response
+client -> server : request
+server -> client : response
+
+@enduml
