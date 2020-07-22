@@ -498,7 +498,17 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </ul>
 </div>
 <div class="paragraph">
-<p>是在一个面试的时间内就能完成的代码。</p>
+<p>是在一个面试的时间内就能完成的代码。热更新相关的知识：</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>无锁双 buffer</p>
+</li>
+<li>
+<p>fsnotify</p>
+</li>
+</ul>
 </div>
 </div>
 </div>
@@ -533,12 +543,263 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 &#8212; https://jimmysong.io/blog/what-is-a-service-mesh/
 </div>
 </div>
+<div class="paragraph">
+<p>TODO，这里有图，circuit breaker，ratelimit 模块本来在 web 框架中 &#8658; 这些功能被迁移到了 service mesh 中。</p>
+</div>
+<div class="paragraph">
+<p>从工程角度来讲，下沉的好处：</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>语言相关的轮子变成了语言无关的公共轮</p>
+</li>
+<li>
+<p>业务团队忙业务，基础社区团队忙基础设施，模块解耦，分工细化</p>
+</li>
+<li>
+<p>不用求你的客户来升级了，自己就能搞定。爸爸变回了同事。</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="trueservice-mesh-的基本概念"><a class="anchor" href="#trueservice-mesh-的基本概念"></a>service mesh 的基本概念</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="true数据面"><a class="anchor" href="#true数据面"></a>数据面</h3>
+<div class="paragraph">
+<p>本质上就是代码，但包含了传统架构中的一些“稳定性”相关的功能。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="true控制面"><a class="anchor" href="#true控制面"></a>控制面</h3>
+<div class="paragraph">
+<p>控制的对象就是数据面，负责管理数据面的配置。istio。
+TODO，简单地演示一点 istio 的配置下发什么的。</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="truemesh-的麻烦"><a class="anchor" href="#truemesh-的麻烦"></a>mesh 的麻烦</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="true协议太多"><a class="anchor" href="#true协议太多"></a>协议太多</h3>
+<div class="paragraph">
+<p>就像 RPC 框架万年统一不了一样，一个公共的流量层就需要去对接五花八门的协议：</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>HTTP</p>
+</li>
+<li>
+<p>HTTP/2</p>
+</li>
+<li>
+<p>HTTP/3</p>
+</li>
+<li>
+<p>dubbo</p>
+</li>
+<li>
+<p>sofarpc</p>
+</li>
+<li>
+<p>gRPC</p>
+</li>
+<li>
+<p>thrift</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>如果一个公司内存在多种 RPC 协议，可能会比较痛苦。但我们可以给我们认识的协议简单分个类。根据协议的交互方式，可以分为 pingpong，和 multiplex 两种类型。</p>
+</div>
+<div class="sect3">
+<h4 id="truepingpong"><a class="anchor" href="#truepingpong"></a>pingpong</h4>
+<div class="paragraph">
+<p>请求发送完毕后，需要阻塞等待响应。一个请求的响应处理完才能发送下一个请求。典型的比如：</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>HTTP</p>
+</li>
+<li>
+<p>redis 协议</p>
+</li>
+<li>
+<p>MySQL 协议</p>
+</li>
+</ul>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="pingpong.png" alt="pingpong">
+</div>
+</div>
+<div class="paragraph">
+<p>这种模型比较简单，实现客户端也简单：</p>
+</div>
+<div class="paragraph">
+<p>encode payload &#8594; write data to connection &#8594; read block until data ready &#8594; decode</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="truemultiplex"><a class="anchor" href="#truemultiplex"></a>multiplex</h4>
+<div class="paragraph">
+<p>向连接发送请求完毕后，不用等待响应就可以继续发送请求。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="multiplex.png" alt="multiplex">
+</div>
+</div>
+<div class="paragraph">
+<p>对于客户端来说，比以前复杂了，请求和响应处理不是顺序流程，所以一般会有一个 map 来记录请求和响应的关系：</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="c" class="language-c hljs">type http2ClientConn struct {
+	....
+	streams         map[uint32]*http2clientStream // 就是这里
+	nextStreamID    uint32
+	....
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>响应解析完毕后，用 stream id 去 map 里找到对应的 request 并唤醒相应的 client。</p>
+</div>
+<div class="paragraph">
+<p>这种响应模型在 Go 里还是比较容易想到怎么做的，我们只要在 stream 对象里放一个 channel 就行了：</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="c" class="language-c hljs">type http2clientStream struct {
+	....
+	resc          chan http2resAndError // 就是这里
+	....
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>其它类型的 RPC 协议和 http1，http2 其实没什么本质区别。</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="true需要业务改造"><a class="anchor" href="#true需要业务改造"></a>需要业务改造</h3>
+<div class="paragraph">
+<p>真正的透明是不可能的，iptables 性能巨差：</p>
+</div>
+<div class="paragraph">
+<p>TODO，这里找一些能验证观点的内容链接。</p>
+</div>
+<div class="paragraph">
+<p>如果你们公司有相对统一的服务框架，哪怕每门语言是用统一的框架都行。</p>
+</div>
+<div class="paragraph">
+<p>当然，一个语言五种框架的公司也不是没有。碰上这样的场景，技术以外的工作会增加。</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="true生僻知识"><a class="anchor" href="#true生僻知识"></a>生僻知识</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="truetrailer"><a class="anchor" href="#truetrailer"></a>trailer</h3>
+<div class="paragraph">
+<p>几乎所有协议设计上都有 trailer</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="truecontinuous-profiling"><a class="anchor" href="#truecontinuous-profiling"></a>continuous profiling</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Google 2010 的老论文：[这里](<a href="https://research.google/pubs/pub36575/)，和一篇更说人话的文章，">这里</a>(<a href="https://www.opsian.com/blog/what-is-continuous-profiling/)，对" class="bare">https://www.opsian.com/blog/what-is-continuous-profiling/)，对</a> continuous profiling 进行了说明。</p>
+</div>
+<div class="paragraph">
+<p>continuous profiling 能给我们带来的益处：</p>
+</div>
+<div class="sect2">
+<h3 id="true快速定位性能恶化问题"><a class="anchor" href="#true快速定位性能恶化问题"></a>快速定位性能恶化问题</h3>
+<div class="paragraph">
+<p>模块上线过程中，从 metrics 里发现突然炸了。这时候通常的做法是回滚，在预发环境研究为什么新版本上线导致爆炸。</p>
+</div>
+<div class="paragraph">
+<p>这个过程是很浪费时间的，并且导致问题的原因又不一定复现得出来(比如因为你和线上机器的负载不一样，环境有细微差别)。</p>
+</div>
+<div class="paragraph">
+<p>定位不出来你就没法上线，不上线问题又复现不了，尴尬不尴尬。</p>
+</div>
+<div class="paragraph">
+<p>在线上系统进行实时问题定位同样麻烦，即使你能拿到当前出问题的 profile，没有历史的 profile 做对比，你看不出来异常情况和正常情况有什么差别，因为通过一个 profile 文件，你不知道某个 dag 图上的节点到底是正常的还是异常的。(即使用 pprof 的 --base 来做 diff，其实也还是挺麻烦的，公司的线上实例想 dump 要各种权限审批。)</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="true节省服务器成本"><a class="anchor" href="#true节省服务器成本"></a>节省服务器成本</h3>
+<div class="paragraph">
+<p>能够对应用进行持续的 profiling，那你其实可以进行非常细粒度的优化。每次上线都可以进行对比，并在有结论后马上进行优化。</p>
+</div>
+<div class="paragraph">
+<p>如果开发者工资比较高(笑，让他花时间来做这些劳动密集的性能测试还不如直接在基础设施中提供能够持续 profiling 的功能。</p>
+</div>
+<div class="paragraph">
+<p>持续、方便地对系统进行优化，能第一时间发现瓶颈，并及时优化。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="true改进开发者的工作流程"><a class="anchor" href="#true改进开发者的工作流程"></a>改进开发者的工作流程</h3>
+<div class="paragraph">
+<p>开发者往往会在线下开发过程中，对自己的程序性能进行一些假设。而实际的生产环境和开发者的假设基本上是对不上的。举个例子，很多开发者在网上看了几篇逃逸分析的文章，就觉得到处都是逃逸，影响了自己模块的性能。并花费很大精力在这些莫名其妙的优化上。结果上线以后发现性能提升 0%。</p>
+</div>
+<div class="paragraph">
+<p>continuous profiling 不需要你做任何假设。</p>
+</div>
+<div class="paragraph">
+<p>这种及时反馈的做法，对于提升开发者的体验帮助还是比较大的，现在的前端工程师们，在写 js 的时候，效果基本上都是可以实时看到的。后端工程师能够及时获取到系统的性能表现的话，自然也能够更及时地做更多事情：</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="cp.png" alt="cp">
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="true政治问题"><a class="anchor" href="#true政治问题"></a>政治问题</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>OUC 基金会，伪开源。</p>
+</div>
+<div class="paragraph">
+<p>从不好的方面来讲，很多公司所谓的借助社区力量，其实就是把大家当成不要钱的外包员工。</p>
+</div>
+<div class="paragraph">
+<p>当然，我们可以换一个说法，如果你给一家公司的开源项目贡献了大量的代码，是有机会通过这个过程直接进入这家公司工作的。</p>
+</div>
+<div class="sect2">
+<h3 id="true一波宣传"><a class="anchor" href="#true一波宣传"></a>一波宣传</h3>
+<div class="imageblock">
+<div class="content">
+<img src="qrcode.jpg" alt="qrcode">
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-07-12 19:17:09 +0800
+Last updated 2020-07-22 14:48:41 +0800
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/github.min.css">
