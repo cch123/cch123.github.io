@@ -47,7 +47,13 @@ ____
 服务网格（Service Mesh）是处理服务间通信的基础设施层。它负责构成现代云原生应用程序的复杂服务拓扑来可靠地交付请求。在实践中，Service Mesh 通常以轻量级网络代理阵列的形式实现，这些代理与应用程序代码部署在一起，对应用程序来说无需感知代理的存在。
 ____
 
-TODO，这里有图，circuit breaker，ratelimit 模块本来在 web 框架中 => 这些功能被迁移到了 service mesh 中。
+image::sdk_and_sm-Page-1.png[]
+
+有了 mesh 以后，变成了这样：
+
+image::sdk_and_sm-Page-2.png[]
+
+功能没有消失，只是从 sdk 搬家到了独立的外部进程。
 
 从工程角度来讲，下沉的好处：
 
@@ -59,12 +65,11 @@ TODO，这里有图，circuit breaker，ratelimit 模块本来在 web 框架中 
 
 === 数据面
 
-本质上就是代码，但包含了传统架构中的一些“稳定性”相关的功能。
+本质上就是请求转发代理，只不过集成了传统的限流、熔断、Tracing、加密等等稳定性(你开心的话你叫服务治理也可以)或安全相关的功能。
 
 === 控制面
 
-控制的对象就是数据面，负责管理数据面的配置。istio。
-TODO，简单地演示一点 istio 的配置下发什么的。
+控制的对象就数据面，负责管理数据面的配置。目前社区中的事实标准是 istio，但 istio 很折腾，升级架构大变化。最近还有说不清的商标捐献骚操作。开源社区的政治问题也不少。
 
 == mesh 的麻烦
 
@@ -129,25 +134,61 @@ type http2clientStream struct {
 
 其它类型的 RPC 协议和 http1，http2 其实没什么本质区别。
 
+除了交互方式有差不多，具体的协议设计其实都差不了多少。
+
+image::packet.gif[]
+
 === 需要业务改造
 
-真正的透明是不可能的，iptables 性能巨差：
-
-TODO，这里找一些能验证观点的内容链接。
+服务发现需要按照社区标准进行改造。比较典型的，dubbo 的服务发现设计和 istio 的就对不上。
 
 如果你们公司有相对统一的服务框架，哪怕每门语言是用统一的框架都行。
 
-当然，一个语言五种框架的公司也不是没有。碰上这样的场景，技术以外的工作会增加。
+当然，一个语言五种框架的公司也不是没有。碰上这样的场景，可能还是需要改很多 sdk。
 
-== 生僻知识
+=== 不可忽视的性能问题
 
-=== trailer
+A -> B 变成了 A-> mesh -> mesh -> B
 
-几乎所有协议设计上都有 trailer
+即使是高性能语言编写的模块，网络多了两跳也是开销。
+
+如果单机 QPS 上万，性能问题就更为严重。
+
+=== 编程语言实在太多了
+
+如果你们公司主语言是 Java，使用 HTTP 通信。引入了 istio 做控制面，envoy 做数据面。那么整个架构中就有了三种语言。运维的灾难。
+
+=== 二开难
+
+如果想要对目前社区的主流 service mesh 方案进行二次开发，那么还是比较难的。你需要懂 Go，需要懂 C++。你还得懂 Google(笑
+
+== mosn 这样的 mesh 项目是怎么落地的
+
+项目一出生就上 istio 的贼船的话，那你这辈子都上不了线了。
+
+比较聪明的做法，在一个模块里把控制面和数据面的工作都先集成了。让公司原有的服务发现能平滑融入到新的 mesh 模块中：
+
+image::service_discovery.png[]
+
+== mesh 的未来
+
+=== proxyless
+
+image::proxyless.jpg[]
+
+=== 巨无霸 mesh
+
+image::sdk_and_sm-Page-3.png[]
 
 == continuous profiling
 
-Google 2010 的老论文：[这里](https://research.google/pubs/pub36575/)，和一篇更说人话的文章，[这里](https://www.opsian.com/blog/what-is-continuous-profiling/)，对 continuous profiling 进行了说明。
+:google_paper: https://research.google/pubs/pub36575/
+
+Google 2010 的老论文：{google_paper}，和一篇更说人话的文章，https://www.opsian.com/blog/what-is-continuous-profiling/，对 continuous profiling 进行了说明。
+
+Google 把这种 continuous profiling 包装成产品在 Google Cloud 上卖钱，不过还是好心地给出了文章：https://medium.com/google-cloud/continuous-profiling-of-go-programs-96d4416af77b，还有 client 端的代码： https://github.com/googleapis/google-cloud-go/tree/master/profiler
+
+image::stackimpact.png[]
 
 continuous profiling 能给我们带来的益处：
 
@@ -179,14 +220,39 @@ continuous profiling 不需要你做任何假设。
 
 image::cp.png[]
 
-== 政治问题
+== 开源社区的政治问题
 
-OUC 基金会，伪开源。
+不管怎么洗，商业公司主导的开源项目，背后都是有商业目的的。
 
-从不好的方面来讲，很多公司所谓的借助社区力量，其实就是把大家当成不要钱的外包员工。
+=== 巨头公司的话语霸权
 
-当然，我们可以换一个说法，如果你给一家公司的开源项目贡献了大量的代码，是有机会通过这个过程直接进入这家公司工作的。
+* 所有互联网公司都是业务驱动
+* 基础设施建设相比业务研发投入是数量级的差别
+* 巨头的 1% 投入，对于普通的公司来说可能就是 100%，本质上是规模效应的碾压
+* 社区内有很强的技术崇拜
 
-=== 一波宣传
+=== 伪开源
+
+* 核心模块和代码由主导公司内的人投入
+* 外人只能负责在外围做“生态建设”
+* 核心模块的贡献可能因为 "very specific"，而被拒绝
+
+=== 非功利?
+
+* 项目负责人晋升项目死了？
+* 很多 committer 拿到了认证之后就刷新一下简历跳槽了
+
+=== 积极地看
+
+* 可以给你心仪公司的项目多做贡献，说不定就可以加入哦
+* 用不用是一回事，学不学是另一回事
+* 要多思考，不要变成传话喇叭
+
+== 一波宣传
+
+mosn 项目地址：
+
+github.com/mosn/mosn
+
 
 image::qrcode.jpg[]

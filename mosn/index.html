@@ -543,8 +543,21 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 &#8212; https://jimmysong.io/blog/what-is-a-service-mesh/
 </div>
 </div>
+<div class="imageblock">
+<div class="content">
+<img src="sdk_and_sm-Page-1.png" alt="sdk and sm Page 1">
+</div>
+</div>
 <div class="paragraph">
-<p>TODO，这里有图，circuit breaker，ratelimit 模块本来在 web 框架中 &#8658; 这些功能被迁移到了 service mesh 中。</p>
+<p>有了 mesh 以后，变成了这样：</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="sdk_and_sm-Page-2.png" alt="sdk and sm Page 2">
+</div>
+</div>
+<div class="paragraph">
+<p>功能没有消失，只是从 sdk 搬家到了独立的外部进程。</p>
 </div>
 <div class="paragraph">
 <p>从工程角度来讲，下沉的好处：</p>
@@ -570,14 +583,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sect2">
 <h3 id="true数据面"><a class="anchor" href="#true数据面"></a>数据面</h3>
 <div class="paragraph">
-<p>本质上就是代码，但包含了传统架构中的一些“稳定性”相关的功能。</p>
+<p>本质上就是请求转发代理，只不过集成了传统的限流、熔断、Tracing、加密等等稳定性(你开心的话你叫服务治理也可以)或安全相关的功能。</p>
 </div>
 </div>
 <div class="sect2">
 <h3 id="true控制面"><a class="anchor" href="#true控制面"></a>控制面</h3>
 <div class="paragraph">
-<p>控制的对象就是数据面，负责管理数据面的配置。istio。
-TODO，简单地演示一点 istio 的配置下发什么的。</p>
+<p>控制的对象就数据面，负责管理数据面的配置。目前社区中的事实标准是 istio，但 istio 很折腾，升级架构大变化。最近还有说不清的商标捐献骚操作。开源社区的政治问题也不少。</p>
 </div>
 </div>
 </div>
@@ -689,32 +701,87 @@ TODO，简单地演示一点 istio 的配置下发什么的。</p>
 <div class="paragraph">
 <p>其它类型的 RPC 协议和 http1，http2 其实没什么本质区别。</p>
 </div>
+<div class="paragraph">
+<p>除了交互方式有差不多，具体的协议设计其实都差不了多少。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="packet.gif" alt="packet">
+</div>
+</div>
 </div>
 </div>
 <div class="sect2">
 <h3 id="true需要业务改造"><a class="anchor" href="#true需要业务改造"></a>需要业务改造</h3>
 <div class="paragraph">
-<p>真正的透明是不可能的，iptables 性能巨差：</p>
-</div>
-<div class="paragraph">
-<p>TODO，这里找一些能验证观点的内容链接。</p>
+<p>服务发现需要按照社区标准进行改造。比较典型的，dubbo 的服务发现设计和 istio 的就对不上。</p>
 </div>
 <div class="paragraph">
 <p>如果你们公司有相对统一的服务框架，哪怕每门语言是用统一的框架都行。</p>
 </div>
 <div class="paragraph">
-<p>当然，一个语言五种框架的公司也不是没有。碰上这样的场景，技术以外的工作会增加。</p>
+<p>当然，一个语言五种框架的公司也不是没有。碰上这样的场景，可能还是需要改很多 sdk。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="true不可忽视的性能问题"><a class="anchor" href="#true不可忽视的性能问题"></a>不可忽视的性能问题</h3>
+<div class="paragraph">
+<p>A &#8594; B 变成了 A&#8594; mesh &#8594; mesh &#8594; B</p>
+</div>
+<div class="paragraph">
+<p>即使是高性能语言编写的模块，网络多了两跳也是开销。</p>
+</div>
+<div class="paragraph">
+<p>如果单机 QPS 上万，性能问题就更为严重。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="true编程语言实在太多了"><a class="anchor" href="#true编程语言实在太多了"></a>编程语言实在太多了</h3>
+<div class="paragraph">
+<p>如果你们公司主语言是 Java，使用 HTTP 通信。引入了 istio 做控制面，envoy 做数据面。那么整个架构中就有了三种语言。运维的灾难。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="true二开难"><a class="anchor" href="#true二开难"></a>二开难</h3>
+<div class="paragraph">
+<p>如果想要对目前社区的主流 service mesh 方案进行二次开发，那么还是比较难的。你需要懂 Go，需要懂 C++。你还得懂 Google(笑</p>
 </div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="true生僻知识"><a class="anchor" href="#true生僻知识"></a>生僻知识</h2>
+<h2 id="truemosn-这样的-mesh-项目是怎么落地的"><a class="anchor" href="#truemosn-这样的-mesh-项目是怎么落地的"></a>mosn 这样的 mesh 项目是怎么落地的</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>项目一出生就上 istio 的贼船的话，那你这辈子都上不了线了。</p>
+</div>
+<div class="paragraph">
+<p>比较聪明的做法，在一个模块里把控制面和数据面的工作都先集成了。让公司原有的服务发现能平滑融入到新的 mesh 模块中：</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="service_discovery.png" alt="service discovery">
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="truemesh-的未来"><a class="anchor" href="#truemesh-的未来"></a>mesh 的未来</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="truetrailer"><a class="anchor" href="#truetrailer"></a>trailer</h3>
-<div class="paragraph">
-<p>几乎所有协议设计上都有 trailer</p>
+<h3 id="trueproxyless"><a class="anchor" href="#trueproxyless"></a>proxyless</h3>
+<div class="imageblock">
+<div class="content">
+<img src="proxyless.jpg" alt="proxyless">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="true巨无霸-mesh"><a class="anchor" href="#true巨无霸-mesh"></a>巨无霸 mesh</h3>
+<div class="imageblock">
+<div class="content">
+<img src="sdk_and_sm-Page-3.png" alt="sdk and sm Page 3">
+</div>
 </div>
 </div>
 </div>
@@ -723,7 +790,15 @@ TODO，简单地演示一点 istio 的配置下发什么的。</p>
 <h2 id="truecontinuous-profiling"><a class="anchor" href="#truecontinuous-profiling"></a>continuous profiling</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Google 2010 的老论文：[这里](<a href="https://research.google/pubs/pub36575/)，和一篇更说人话的文章，">这里</a>(<a href="https://www.opsian.com/blog/what-is-continuous-profiling/)，对" class="bare">https://www.opsian.com/blog/what-is-continuous-profiling/)，对</a> continuous profiling 进行了说明。</p>
+<p>Google 2010 的老论文：https://research.google/pubs/pub36575/，和一篇更说人话的文章，https://www.opsian.com/blog/what-is-continuous-profiling/，对 continuous profiling 进行了说明。</p>
+</div>
+<div class="paragraph">
+<p>Google 把这种 continuous profiling 包装成产品在 Google Cloud 上卖钱，不过还是好心地给出了文章：https://medium.com/google-cloud/continuous-profiling-of-go-programs-96d4416af77b，还有 client 端的代码： <a href="https://github.com/googleapis/google-cloud-go/tree/master/profiler" class="bare">https://github.com/googleapis/google-cloud-go/tree/master/profiler</a></p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="stackimpact.png" alt="stackimpact">
+</div>
 </div>
 <div class="paragraph">
 <p>continuous profiling 能给我们带来的益处：</p>
@@ -775,19 +850,86 @@ TODO，简单地演示一点 istio 的配置下发什么的。</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="true政治问题"><a class="anchor" href="#true政治问题"></a>政治问题</h2>
+<h2 id="true开源社区的政治问题"><a class="anchor" href="#true开源社区的政治问题"></a>开源社区的政治问题</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>OUC 基金会，伪开源。</p>
-</div>
-<div class="paragraph">
-<p>从不好的方面来讲，很多公司所谓的借助社区力量，其实就是把大家当成不要钱的外包员工。</p>
-</div>
-<div class="paragraph">
-<p>当然，我们可以换一个说法，如果你给一家公司的开源项目贡献了大量的代码，是有机会通过这个过程直接进入这家公司工作的。</p>
+<p>不管怎么洗，商业公司主导的开源项目，背后都是有商业目的的。</p>
 </div>
 <div class="sect2">
-<h3 id="true一波宣传"><a class="anchor" href="#true一波宣传"></a>一波宣传</h3>
+<h3 id="true巨头公司的话语霸权"><a class="anchor" href="#true巨头公司的话语霸权"></a>巨头公司的话语霸权</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>所有互联网公司都是业务驱动</p>
+</li>
+<li>
+<p>基础设施建设相比业务研发投入是数量级的差别</p>
+</li>
+<li>
+<p>巨头的 1% 投入，对于普通的公司来说可能就是 100%，本质上是规模效应的碾压</p>
+</li>
+<li>
+<p>社区内有很强的技术崇拜</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="true伪开源"><a class="anchor" href="#true伪开源"></a>伪开源</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>核心模块和代码由主导公司内的人投入</p>
+</li>
+<li>
+<p>外人只能负责在外围做“生态建设”</p>
+</li>
+<li>
+<p>核心模块的贡献可能因为 "very specific"，而被拒绝</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="true非功利"><a class="anchor" href="#true非功利"></a>非功利?</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>项目负责人晋升项目死了？</p>
+</li>
+<li>
+<p>很多 committer 拿到了认证之后就刷新一下简历跳槽了</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="true积极地看"><a class="anchor" href="#true积极地看"></a>积极地看</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>可以给你心仪公司的项目多做贡献，说不定就可以加入哦</p>
+</li>
+<li>
+<p>用不用是一回事，学不学是另一回事</p>
+</li>
+<li>
+<p>要多思考，不要变成传话喇叭</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="true一波宣传"><a class="anchor" href="#true一波宣传"></a>一波宣传</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>mosn 项目地址：</p>
+</div>
+<div class="paragraph">
+<p>github.com/mosn/mosn</p>
+</div>
 <div class="imageblock">
 <div class="content">
 <img src="qrcode.jpg" alt="qrcode">
@@ -796,10 +938,9 @@ TODO，简单地演示一点 istio 的配置下发什么的。</p>
 </div>
 </div>
 </div>
-</div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-07-22 14:48:41 +0800
+Last updated 2020-07-23 20:58:41 +0800
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/github.min.css">
