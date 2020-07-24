@@ -439,6 +439,51 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <body class="article">
 <div id="header">
 <h1>service mesh 乱谈</h1>
+<div id="toc" class="toc">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#true为什么需要-sidecar">为什么需要 sidecar</a></li>
+<li><a href="#true为什么需要-mesh">为什么需要 mesh</a></li>
+<li><a href="#trueservice-mesh-的基本概念">service mesh 的基本概念</a>
+<ul class="sectlevel2">
+<li><a href="#true数据面">数据面</a></li>
+<li><a href="#true控制面">控制面</a></li>
+</ul>
+</li>
+<li><a href="#truemesh-的麻烦">mesh 的麻烦</a>
+<ul class="sectlevel2">
+<li><a href="#true协议太多">协议太多</a></li>
+<li><a href="#true需要业务改造">需要业务改造</a></li>
+<li><a href="#true不可忽视的性能问题">不可忽视的性能问题</a></li>
+<li><a href="#true编程语言实在太多了">编程语言实在太多了</a></li>
+<li><a href="#true二开难">二开难</a></li>
+</ul>
+</li>
+<li><a href="#truemosn-这样的-mesh-项目是怎么落地的">mosn 这样的 mesh 项目是怎么落地的</a></li>
+<li><a href="#truemesh-的未来">mesh 的未来</a>
+<ul class="sectlevel2">
+<li><a href="#trueproxyless">proxyless</a></li>
+<li><a href="#true巨无霸-mesh">巨无霸 mesh</a></li>
+</ul>
+</li>
+<li><a href="#truecontinuous-profiling">continuous profiling</a>
+<ul class="sectlevel2">
+<li><a href="#true快速定位性能恶化问题">快速定位性能恶化问题</a></li>
+<li><a href="#true节省服务器成本">节省服务器成本</a></li>
+<li><a href="#true改进开发者的工作流程">改进开发者的工作流程</a></li>
+</ul>
+</li>
+<li><a href="#true开源社区的政治问题">开源社区的政治问题</a>
+<ul class="sectlevel2">
+<li><a href="#true巨头公司的话语霸权">巨头公司的话语霸权</a></li>
+<li><a href="#true伪开源">伪开源</a></li>
+<li><a href="#true非功利">非功利?</a></li>
+<li><a href="#true积极地看">积极地看</a></li>
+</ul>
+</li>
+<li><a href="#true一波宣传">一波宣传</a></li>
+</ul>
+</div>
 </div>
 <div id="content">
 <div class="sect1">
@@ -940,7 +985,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-07-23 20:58:41 +0800
+Last updated 2020-07-24 14:08:59 +0800
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/github.min.css">
