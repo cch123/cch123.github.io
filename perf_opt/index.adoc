@@ -1,0 +1,144 @@
+=  Go 语言性能优化
+
+== 优化工作流
+
+TODO
+
+== 局部优化
+
+[WARNING]
+====
+调用外部命令
+====
+
+[source,go]
+----
+package main
+
+import (
+	"os/exec"
+	"testing"
+
+	uuid "github.com/satori/go.uuid"
+)
+
+var uu []byte
+var u1 uuid.UUID
+
+func BenchmarkUUIDExec(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		uu, _ = exec.Command("uuidgen").Output()
+	}
+}
+
+func BenchmarkUUIDLib(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		u1 = uuid.NewV4()
+	}
+}
+----
+
+[WARNING]
+====
+字符串操作
+====
+
+用加号连接，和 Sprintf 差别还是比较大的：
+
+[source,go]
+----
+func BenchmarkBytesBufferAppend(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		var msg bytes.Buffer
+		msg.WriteString("userid : " + "1")
+		msg.WriteString("location : " + "ab")
+	}
+}
+
+func BenchmarkBytesBufferAppendSprintf(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		var msg bytes.Buffer
+		msg.WriteString(fmt.Sprintf("userid : %d", 1))
+		msg.WriteString(fmt.Sprintf("location : %s", "ab"))
+	}
+}
+----
+
+image::string_bench.png[]
+
+fmt.打印系列大部分会造成变量逃逸(interface 参数)。
+
+
+== 全局优化
+
+寻找程序的整体瓶颈。
+
+wrk、pprof、压测平台
+
+== 性能瓶颈举例
+
+=== 业务逻辑
+
+=== 算法时间复杂度
+
+=== 过多的系统调用
+
+=== 过多的对象
+
+[TIP]
+====
+使用 sync.Pool
+====
+
+struct 可以复用，slice 可以复用，但 map 不太好复用。
+
+复用本身可能导致 bug，例如：
+
+* 拿出时不 Reset
+* slice 缩容时，被缩掉对象如果不置 nil，是不会释放的
+* 在 Put 回 Pool 时，不判断大小，导致了进程占内存越来越大
+
+[TIP]
+====
+offheap map。
+====
+
+如果数据不可变，只作查询，也可以考虑 offheap，但局限性较大。
+
+=== 过多的协程
+
+workerpool
+
+=== 锁冲突
+
+通过阶梯加压，观察 goroutine 的变化趋势。当触发锁瓶颈时，会出现大量等锁的 goroutine。
+
+=== 程序局部性
+
+cache size pad
+
+行遍历比列遍历要快。
+
+== 语言本身的一些缺陷
+
+=== 越压越差
+
+=== 调度和锁
+
+调度 + 锁出问题，难复现，难定位
+
+=== 不注意造成死循环会让整个进程 hang 住
+
+=== 物理机负载高时，延迟非线性增长
+
+=== 调度导致 CPU 密集型业务超时
+
+TODO，bcrypt 的例子
+
+因为调度导致的全部超时
+
+=== 老版本的问题
+
+==== time.Sleep 过多的 syscall
+
+==== sync.Pool 在 GC 时全清空
