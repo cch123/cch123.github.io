@@ -4,6 +4,16 @@
 
 TODO
 
+== 问题定位工具
+
+原理：每秒 1000 次，采样。
+
+=== pprof
+
+=== trace
+
+=== fgprof
+
 == 局部优化
 
 [WARNING]
@@ -68,7 +78,6 @@ image::string_bench.png[]
 
 fmt.打印系列大部分会造成变量逃逸(interface 参数)。
 
-
 == 全局优化
 
 寻找程序的整体瓶颈。
@@ -79,9 +88,19 @@ wrk、pprof、压测平台
 
 === 业务逻辑
 
+=== 序列化 CPU 占用过高
+
+标准库 json -> jsoniter，新版本不一定适用。
+
+json -> pb。
+
 === 算法时间复杂度
 
+显而易见，O(logn) 和 O(n)，O(logn) 最多就 64 次，而 O(n) 可能耗尽计算资源。
+
 === 过多的系统调用
+
+合并调用，writev？
 
 === 过多的对象
 
@@ -89,6 +108,8 @@ wrk、pprof、压测平台
 ====
 使用 sync.Pool
 ====
+
+sync.Pool 才能实现 zero garbage。benchmark 中的 0 alloc，其实是因为对象有复用，alloc 平均 < 1。
 
 struct 可以复用，slice 可以复用，但 map 不太好复用。
 
@@ -98,6 +119,7 @@ struct 可以复用，slice 可以复用，但 map 不太好复用。
 * slice 缩容时，被缩掉对象如果不置 nil，是不会释放的
 * 在 Put 回 Pool 时，不判断大小，导致了进程占内存越来越大
 
+
 [TIP]
 ====
 offheap map。
@@ -105,19 +127,49 @@ offheap map。
 
 如果数据不可变，只作查询，也可以考虑 offheap，但局限性较大。
 
-=== 过多的协程
+=== 过多的调度 CPU 占用(例如火焰图中，schedule 有一大条)
 
-workerpool
+类似 fasthttp 的 workerpool。
 
 === 锁冲突
 
 通过阶梯加压，观察 goroutine 的变化趋势。当触发锁瓶颈时，会出现大量等锁的 goroutine。
+
+==== 原因
+
+临界区太大，其中包含系统调用。
+
+有些锁是避免不了的，例如 fs.Write，一定有锁，且该锁在 runtime 内部。
+
+性能敏感场合，全局锁，比如 rand 的全局锁。单机 10w+ QPS 即可能触发该瓶颈(和环境以及程序行为有关)
+
+有些开源库设计是一个 struct 对应一个 sync.Pool，这种时候，如果你不对该 struct 进行复用，就会触发 runtime 中的锁冲突：
+
+TODO
+
+==== 解决方案
+
+map -> sync.Map。
+
+换用无锁结构。
 
 === 程序局部性
 
 cache size pad
 
 行遍历比列遍历要快。
+
+=== timer 性能问题
+
+TODO，找性能问题的案例
+
+* 用时间轮实现粗粒度的时间库
+
+=== 汇编优化
+
+SIMD 优化，如 math 库。gonum 中也有一些例子。
+
+无法跨平台，如未来碰到国产化需求要上 ARM、龙芯(MIPS) 就尴尬了。
 
 == 语言本身的一些缺陷
 
@@ -129,7 +181,13 @@ cache size pad
 
 === 不注意造成死循环会让整个进程 hang 住
 
+GC 需要抢占所有 goroutine，老版本的抢占需要用户协程在 morestack 时主动退出。
+
+卡 gcwaiting。
+
 === 物理机负载高时，延迟非线性增长
+
+TODO
 
 === 调度导致 CPU 密集型业务超时
 
@@ -142,3 +200,9 @@ TODO，bcrypt 的例子
 ==== time.Sleep 过多的 syscall
 
 ==== sync.Pool 在 GC 时全清空
+
+=== 当前问题定位工具的局限性
+
+难以定位抖动问题
+
+==== continuous profiling
