@@ -1,5 +1,7 @@
 =  Go 语言性能优化
 
+https://colin-scott.github.io/personal_website/research/interactive_latency.html
+
 == 优化工作流
 
 TODO
