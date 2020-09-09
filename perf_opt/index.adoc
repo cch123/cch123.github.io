@@ -1,20 +1,50 @@
 =  Go 语言性能优化
 
+Latency numbers every programmer should know:
+
 https://colin-scott.github.io/personal_website/research/interactive_latency.html
 
 == 优化工作流
 
-TODO
+建立评估指标(eg. Latency) -> 提出解决方案 -> 尝试方案
+
+不断重复
 
 == 问题定位工具
 
-原理：每秒 1000 次，采样。
-
 === pprof
+
+基本原理：
+
+[quote]
+____
+The builtin Go CPU profiler uses the setitimer(2) system call to ask the operating system to be sent a SIGPROF signal 100 times a second. Each signal stops the Go process and gets delivered to a random thread's sigtrampgo() function. This function then proceeds to call sigprof() or sigprofNonGo() to record the thread's current stack.
+
+Since Go uses non-blocking I/O, Goroutines that wait on I/O are parked and not running on any threads. Therefore they end up being largely invisible to Go's builtin CPU profiler.
+____
+
+每秒被唤醒 100 次，记录每个线程上的栈。
+
+=== fgprof
+
+[quote]
+____
+fgprof is implemented as a background goroutine that wakes up 99 times per second and calls runtime.GoroutineProfile. This returns a list of all goroutines regardless of their current On/Off CPU scheduling status and their call stacks.
+____
+
+比较类似，但是会包含那些 Off CPU 的 goroutine。
+
+可以用来诊断 CPU、IO 混合的执行时间占比。
 
 === trace
 
-=== fgprof
+一般用来诊断一些诡异的抖动问题，或 runtime 的 bug(或者用来学习 runtime 的执行流)，用来做问题诊断效果一般。
+
+基本原理是在 runtime 中埋了大量点，记录一堆 event 来追踪 runtime 执行流程。
+
+=== perf
+
+perf 也是可以用的。
 
 == 局部优化
 
@@ -90,11 +120,12 @@ wrk、pprof、压测平台
 
 === 业务逻辑
 
+* 查数据库本来 in 查询就可以了，但是却 for 循环查。
+TODO
+
 === 序列化 CPU 占用过高
 
-标准库 json -> jsoniter，新版本不一定适用。
-
-json -> pb。
+寻找一些针对性进行过优化的库，或者从文本协议更换为二进制协议。
 
 === 算法时间复杂度
 
@@ -106,10 +137,7 @@ json -> pb。
 
 === 过多的对象
 
-[TIP]
-====
-使用 sync.Pool
-====
+==== sync.Pool
 
 sync.Pool 才能实现 zero garbage。benchmark 中的 0 alloc，其实是因为对象有复用，alloc 平均 < 1。
 
@@ -121,17 +149,23 @@ struct 可以复用，slice 可以复用，但 map 不太好复用。
 * slice 缩容时，被缩掉对象如果不置 nil，是不会释放的
 * 在 Put 回 Pool 时，不判断大小，导致了进程占内存越来越大
 
-
-[TIP]
-====
-offheap map。
-====
+==== offheap
 
 如果数据不可变，只作查询，也可以考虑 offheap，但局限性较大。
+
+==== 减少变量逃逸
+
+使用 go build -gcflags="-m -m" 来分析逃逸。
+
+如果要分析某个 package 内的逃逸情况，可以打全 package 名，例如 go build -gcflags="-m -m" github.com/cch123/elasticsql
 
 === 过多的调度 CPU 占用(例如火焰图中，schedule 有一大条)
 
 类似 fasthttp 的 workerpool。
+
+https://github.com/valyala/fasthttp/blob/master/workerpool.go#L19
+
+创建好的 goroutine 可以反复使用，并且自己实现可以控制最大的并发 worker 数。
 
 === 锁冲突
 
@@ -151,27 +185,119 @@ TODO
 
 ==== 解决方案
 
-map -> sync.Map。
-
-换用无锁结构。
+* map -> sync.Map。
+* 换用无锁结构。
+* 分段锁
+* copy on write
 
 === 程序局部性
 
-cache size pad
+==== false sharing
 
-行遍历比列遍历要快。
+时间局部性、空间局部性
+
+[source, go]
+====
+var semtable [semTabSize]struct {
+	root semaRoot
+	pad  [cpu.CacheLinePadSize - unsafe.Sizeof(semaRoot{})]byte
+}
+====
+
+[source, go]
+====
+var timers [timersLen]struct {
+	timersBucket
+
+	// The padding should eliminate false sharing
+	// between timersBucket values.
+	pad [cpu.CacheLinePadSize - unsafe.Sizeof(timersBucket{})%cpu.CacheLinePadSize]byte
+}
+====
+
+类似下面的二维数组，怎么遍历更快？
+
+[source, go]
+====
+var a = [10000][10000]int{}
+====
+
+在标准库中，考虑到局部性而实现的 sort 的例子：
+
+[source, go]
+====
+func quickSort_func(data lessSwap, a, b, maxDepth int) {
+	for b-a > 12 {
+		if maxDepth == 0 {
+			heapSort_func(data, a, b)
+			return
+		}
+		maxDepth--
+		mlo, mhi := doPivot_func(data, a, b)
+		if mlo-a < b-mhi {
+			quickSort_func(data, a, mlo, maxDepth)
+			a = mhi
+		} else {
+			quickSort_func(data, mhi, b, maxDepth)
+			b = mlo
+		}
+	}
+	if b-a > 1 {
+		for i := a + 6; i < b; i++ {
+			if data.Less(i, i-6) {
+				data.Swap(i, i-6)
+			}
+		}
+		insertionSort_func(data, a, b)
+	}
+}
+====
+
+==== true sharing
+
+这时候一般都有锁，所以本质上还是怎么降低锁的粒度。
+
+[quote]
+____
+sync: RWMutex scales poorly with CPU count
+____
 
 === timer 性能问题
 
-TODO，找性能问题的案例
+* 老版本的 timer 会有大量的 syscall -> https://github.com/golang/go/issues/25471
+[source, text]
+====
+// xiaorui.cc
+
+go1.13
+
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+ 84.00   12.007993         459     26148      3874 futex
+ 11.43    1.634512         146     11180           nanosleep
+  4.45    0.635987          32     20185           sched_yield
+
+go1.14
+
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+ 58.78    4.837332         174     27770      4662 futex
+ 19.50    1.605189         440      3646           nanosleep
+ 11.55    0.950730          44     21569           epoll_pwait
+  9.75    0.802715          36     22181           sched_yield:w
+
+====
 
 * 用时间轮实现粗粒度的时间库
+
+可以搜搜大量的 timewheel 库。
 
 === 汇编优化
 
 SIMD 优化，如 math 库。gonum 中也有一些例子。
-
 无法跨平台，如未来碰到国产化需求要上 ARM、龙芯(MIPS) 就尴尬了。
+
+https://github.com/gonum/gonum/tree/master/internal/asm/f64
 
 == 语言本身的一些缺陷
 
@@ -199,12 +325,20 @@ TODO，bcrypt 的例子
 
 === 老版本的问题
 
-==== time.Sleep 过多的 syscall
-
 ==== sync.Pool 在 GC 时全清空
+
+导致在每一轮 GC 后都有延迟抖动，升级 1.13 后长尾请求有改善。
 
 === 当前问题定位工具的局限性
 
-难以定位抖动问题
+难以定位抖动问题。
+
+无论 pprof、perf、fgprof、trace 都是人肉触发，抖动时人又不在系统旁边。
+
+这种情况需要 self-aware 的 profile dump 方式来解决问题。
+
+或者向 Google 看齐:
 
 ==== continuous profiling
+
+早发现，早治疗。
