@@ -278,6 +278,64 @@ string -> struct {value [12]byte, length int)
 
 * 尽量少用 fmt.Print、fmt.Sprint 系列的函数。
 
+==== map 结构的 128 阈值
+
+key > 128 字节时，indirectkey = true
+
+value > 128 字节时，indirectvalue = true
+
+我们可以用 lldb 来进行简单验证:
+
+[source, go]
+----
+package main
+
+import "fmt"
+
+func main() {
+    type P struct {
+        Age [16]int
+    }
+    var a = map[P]int{}
+    a[P{}] = 1
+    fmt.Println(a)
+}
+----
+
+在 gdb 中可以看到 indirectkey 为 false。
+
+[source, text]
+----
+(lldb) b mapassign
+(lldb) p *t
+(runtime.maptype) *t = {
+  typ = {
+    size = 0x0000000000000008
+    ptrdata = 0x0000000000000008
+    hash = 2678392653
+    tflag = 2
+    align = 8
+    fieldalign = 8
+    kind = 53
+    alg = 0x0000000001137020
+    gcdata = 0x00000000010cf298
+    str = 26128
+    ptrToThis = 0
+  }
+  key = 0x00000000010a77a0
+  elem = 0x000000000109d180
+  bucket = 0x00000000010aea00
+  hmap = 0x00000000010b4da0
+  keysize = 128  =======> 128 字节
+  indirectkey = false =====> false
+  valuesize = 8
+  indirectvalue = false
+  bucketsize = 1104
+  reflexivekey = true
+  needkeyupdate = false
+}
+----
+
 === 过多的调度 CPU 占用(例如火焰图中，schedule 有一大条)
 
 类似 fasthttp 的 workerpool。
