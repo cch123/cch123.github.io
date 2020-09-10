@@ -655,7 +655,9 @@ func BenchmarkUUIDLib(b *testing.B) {
 <div class="sect2">
 <h3 id="true过多的系统调用"><a class="anchor" href="#true过多的系统调用"></a>过多的系统调用</h3>
 <div class="paragraph">
-<p>合并调用，writev？但是合并的 syscall 延迟可能会上升。</p>
+<p>合并调用
+* 如 writev，但是合并的 syscall 延迟可能会上升。
+* pipeline，一下发一堆请求，不过现在可能连 HTTP 的 pipeline 都不一定支持得好。经常被 benchmark 玩家用来刷数据。</p>
 </div>
 </div>
 <div class="sect2">
@@ -926,7 +928,7 @@ func main() {
 <div class="ulist">
 <ul>
 <li>
-<p>map &#8594; sync.Map</p>
+<p>map &#8594; sync.Map(读多写少)</p>
 </li>
 <li>
 <p>换用无锁结构，如 lock free queue、stack 等</p>
@@ -1280,7 +1282,7 @@ func main() {
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-09-10 16:06:49 +0800
+Last updated 2020-09-10 16:13:32 +0800
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/github.min.css">

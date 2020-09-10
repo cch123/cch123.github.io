@@ -187,7 +187,9 @@ runtime 里的算法优化：
 
 === 过多的系统调用
 
-合并调用，writev？但是合并的 syscall 延迟可能会上升。
+合并调用
+* 如 writev，但是合并的 syscall 延迟可能会上升。
+* pipeline，一下发一堆请求，不过现在可能连 HTTP 的 pipeline 都不一定支持得好。经常被 benchmark 玩家用来刷数据。
 
 === 过多的对象
 
@@ -370,7 +372,7 @@ https://xargin.com/lock-contention-in-go/[lock contention]
 
 ==== 解决方案
 
-* map -> sync.Map
+* map -> sync.Map(读多写少)
 * 换用无锁结构，如 lock free queue、stack 等
 * 分段锁
 * copy on write，业务逻辑允许的前提下，在修改时拷贝一份，再修改
