@@ -553,6 +553,42 @@ yyyy
 <div class="sect1">
 <h2 id="true局部优化"><a class="anchor" href="#true局部优化"></a>局部优化</h2>
 <div class="sectionbody">
+<div class="paragraph">
+<p>go test -bench=. -benchmem</p>
+</div>
+<div class="paragraph">
+<p>或者</p>
+</div>
+<div class="paragraph">
+<p>go test -cpuprofile -bench</p>
+</div>
+<div class="paragraph">
+<p>memprofile 同理，一次只 bench 一种，否则可能不准。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="true全局优化"><a class="anchor" href="#true全局优化"></a>全局优化</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>寻找程序的整体瓶颈。</p>
+</div>
+<div class="paragraph">
+<p>wrk、pprof、压测平台</p>
+</div>
+<div class="paragraph">
+<p><a href="https://github.com/bojand/ghz" class="bare">https://github.com/bojand/ghz</a></p>
+</div>
+<div class="paragraph">
+<p>有压测平台是最好的，方便 AB，自己玩比较容易手忙脚乱，数据错位。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="true性能瓶颈举例"><a class="anchor" href="#true性能瓶颈举例"></a>性能瓶颈举例</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="true业务逻辑"><a class="anchor" href="#true业务逻辑"></a>业务逻辑</h3>
 <div class="admonitionblock warning">
 <table>
 <tr>
@@ -594,81 +630,14 @@ func BenchmarkUUIDLib(b *testing.B) {
 }</code></pre>
 </div>
 </div>
-<div class="admonitionblock warning">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-warning" title="Warning"></i>
-</td>
-<td class="content">
-<div class="paragraph">
-<p>字符串操作</p>
-</div>
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>用加号连接，和 Sprintf 差别还是比较大的：</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code data-lang="go" class="language-go hljs">func BenchmarkBytesBufferAppend(b *testing.B) {
-	for i := 0; i &lt; b.N; i++ {
-		var msg bytes.Buffer
-		msg.WriteString("userid : " + "1")
-		msg.WriteString("location : " + "ab")
-	}
-}
-
-func BenchmarkBytesBufferAppendSprintf(b *testing.B) {
-	for i := 0; i &lt; b.N; i++ {
-		var msg bytes.Buffer
-		msg.WriteString(fmt.Sprintf("userid : %d", 1))
-		msg.WriteString(fmt.Sprintf("location : %s", "ab"))
-	}
-}</code></pre>
-</div>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="string_bench.png" alt="string bench">
-</div>
-</div>
-<div class="paragraph">
-<p>fmt.打印系列大部分会造成变量逃逸(interface 参数)。</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="true全局优化"><a class="anchor" href="#true全局优化"></a>全局优化</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>寻找程序的整体瓶颈。</p>
-</div>
-<div class="paragraph">
-<p>wrk、pprof、压测平台</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="true性能瓶颈举例"><a class="anchor" href="#true性能瓶颈举例"></a>性能瓶颈举例</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="true业务逻辑"><a class="anchor" href="#true业务逻辑"></a>业务逻辑</h3>
-<div class="ulist">
-<ul>
-<li>
-<p>查数据库本来 in 查询就可以了，但是却 for 循环查。
-TODO</p>
-</li>
-</ul>
-</div>
 </div>
 <div class="sect2">
 <h3 id="true序列化-cpu-占用过高"><a class="anchor" href="#true序列化-cpu-占用过高"></a>序列化 CPU 占用过高</h3>
 <div class="paragraph">
 <p>寻找一些针对性进行过优化的库，或者从文本协议更换为二进制协议。</p>
+</div>
+<div class="paragraph">
+<p>比如 k8s 为了性能就集成了 jsoniter。</p>
 </div>
 </div>
 <div class="sect2">
@@ -722,11 +691,55 @@ TODO</p>
 <div class="sect2">
 <h3 id="true过多的系统调用"><a class="anchor" href="#true过多的系统调用"></a>过多的系统调用</h3>
 <div class="paragraph">
-<p>合并调用，writev？</p>
+<p>合并调用，writev？但是合并的 syscall 延迟可能会上升。</p>
 </div>
 </div>
 <div class="sect2">
 <h3 id="true过多的对象"><a class="anchor" href="#true过多的对象"></a>过多的对象</h3>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>字符串操作</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>用加号连接，和 Sprintf 差别还是比较大的：</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="go" class="language-go hljs">func BenchmarkBytesBufferAppend(b *testing.B) {
+	for i := 0; i &lt; b.N; i++ {
+		var msg bytes.Buffer
+		msg.WriteString("userid : " + "1")
+		msg.WriteString("location : " + "ab")
+	}
+}
+
+func BenchmarkBytesBufferAppendSprintf(b *testing.B) {
+	for i := 0; i &lt; b.N; i++ {
+		var msg bytes.Buffer
+		msg.WriteString(fmt.Sprintf("userid : %d", 1))
+		msg.WriteString(fmt.Sprintf("location : %s", "ab"))
+	}
+}</code></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="string_bench.png" alt="string bench">
+</div>
+</div>
+<div class="paragraph">
+<p>fmt.打印系列大部分会造成变量逃逸(interface 参数)。</p>
+</div>
 <div class="sect3">
 <h4 id="truesync-pool"><a class="anchor" href="#truesync-pool"></a>sync.Pool</h4>
 <div class="paragraph">
@@ -771,12 +784,64 @@ TODO</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="true减少变量逃逸"><a class="anchor" href="#true减少变量逃逸"></a>减少变量逃逸</h4>
+<h4 id="true减少指针类型变量逃逸"><a class="anchor" href="#true减少指针类型变量逃逸"></a>减少指针类型变量逃逸</h4>
 <div class="paragraph">
 <p>使用 go build -gcflags="-m -m" 来分析逃逸。</p>
 </div>
 <div class="paragraph">
 <p>如果要分析某个 package 内的逃逸情况，可以打全 package 名，例如 go build -gcflags="-m -m" github.com/cch123/elasticsql</p>
+</div>
+<div class="paragraph">
+<p>string 类型天然就是带指针的类型，比如一些 cache 服务，有几千万 entry，那么用 string 来做 key 和 value 可能成本就很高。</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>减少指针的手段：</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>用值类型代替指针类型，比如：</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="go" class="language-go hljs">*int -&gt; struct {value int, isNull bool}
+
+string -&gt; struct {value [12]byte, length int)
+
+数值类型的 string -&gt; int
+
+*Host -&gt; Host</code></pre>
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>减少逃逸的手段:</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>尽量少用 fmt.Print、fmt.Sprint 系列的函数。</p>
+</li>
+</ul>
 </div>
 </div>
 </div>
@@ -984,12 +1049,79 @@ go1.14
 <div class="sectionbody">
 <div class="sect2">
 <h3 id="true越压越差"><a class="anchor" href="#true越压越差"></a>越压越差</h3>
+<div class="paragraph">
+<p>runtime 虽然会对 g 结构体进行 cache 和复用，但在瞬时的高峰时，可能产生同时在执行的大量 goroutine，这些 goroutine 会导致：</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="go" class="language-go hljs">var (
+	allgs    []*g
+	allglock mutex
+)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>runtime 中上面的 allgs 这个数组变大，比如你并发产生了 100000 个 goroutine，那么在高峰过后，即使不再服务任何请求，你的进程占用的 CPU 也会比高峰之前多。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="go" class="language-go hljs">package main
 
+import (
+	"log"
+	"net/http"
+	_ "net/http/pprof"
+	"time"
+)
+
+func sayhello(wr http.ResponseWriter, r *http.Request) {}
+
+func main() {
+	for i := 0; i &lt; 1000000; i++ {
+		go func() {
+			time.Sleep(time.Second * 10)
+		}()
+	}
+	http.HandleFunc("/", sayhello)
+	err := http.ListenAndServe(":9090", nil)
+	if err != nil {
+		log.Fatal("ListenAndServe:", err)
+	}
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>可以在你的机器上跑跑上面这个程序，用下面的 python 脚本来验证：</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="python" class="language-python hljs">import psutil
+import time
+
+p = psutil.Process(1) # 改成你自己的 pid 就行了
+
+while 1:
+    v = str(p.cpu_percent())
+    if "0.0" != v:
+        print(v, time.time())
+    time.sleep(1)</code></pre>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="true调度和锁"><a class="anchor" href="#true调度和锁"></a>调度和锁</h3>
 <div class="paragraph">
-<p>调度 + 锁出问题，难复现，难定位</p>
+<p>调度 + 锁出问题，难复现，难定位。</p>
+</div>
+<div class="paragraph">
+<p>比如高压力下，刚拿到锁就被调度走了(可能因为正好发生了 GC)，且导致大量的其它需要获取锁的 goroutine 阻塞。</p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Authors of parallel programs have known for decades that performance can suffer badly if a thread is preempted while holding a lock; this is sometimes referred to as inopportune preemption.</p>
+</div>
+</blockquote>
 </div>
 </div>
 <div class="sect2">
@@ -999,6 +1131,9 @@ go1.14
 </div>
 <div class="paragraph">
 <p>卡 gcwaiting。</p>
+</div>
+<div class="paragraph">
+<p>perf top 可解。</p>
 </div>
 </div>
 <div class="sect2">
@@ -1061,6 +1196,18 @@ go1.14
 <img src="con_perf.png" alt="con perf">
 </div>
 </div>
+<div class="paragraph">
+<p>推荐材料：</p>
+</div>
+<div class="paragraph">
+<p><a href="http://team.jiunile.com/blog/2020/05/go-performance.html" class="bare">http://team.jiunile.com/blog/2020/05/go-performance.html</a></p>
+</div>
+<div class="paragraph">
+<p><a href="https://dave.cheney.net/high-performance-go-workshop/dotgo-paris.html" class="bare">https://dave.cheney.net/high-performance-go-workshop/dotgo-paris.html</a></p>
+</div>
+<div class="paragraph">
+<p><a href="https://github.com/dgryski/go-perfbook/blob/master/performance.md" class="bare">https://github.com/dgryski/go-perfbook/blob/master/performance.md</a></p>
+</div>
 </div>
 </div>
 </div>
@@ -1068,7 +1215,7 @@ go1.14
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-09-10 14:23:00 +0800
+Last updated 2020-09-10 14:50:21 +0800
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/github.min.css">

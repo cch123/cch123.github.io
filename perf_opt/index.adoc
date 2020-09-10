@@ -74,6 +74,28 @@ image::perf.png[]
 
 == 局部优化
 
+go test -bench=. -benchmem
+
+或者
+
+go test -cpuprofile -bench
+
+memprofile 同理，一次只 bench 一种，否则可能不准。
+
+== 全局优化
+
+寻找程序的整体瓶颈。
+
+wrk、pprof、压测平台
+
+https://github.com/bojand/ghz
+
+有压测平台是最好的，方便 AB，自己玩比较容易手忙脚乱，数据错位。
+
+== 性能瓶颈举例
+
+=== 业务逻辑
+
 [WARNING]
 ====
 调用外部命令
@@ -106,52 +128,11 @@ func BenchmarkUUIDLib(b *testing.B) {
 }
 ----
 
-[WARNING]
-====
-字符串操作
-====
-
-用加号连接，和 Sprintf 差别还是比较大的：
-
-[source,go]
-----
-func BenchmarkBytesBufferAppend(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		var msg bytes.Buffer
-		msg.WriteString("userid : " + "1")
-		msg.WriteString("location : " + "ab")
-	}
-}
-
-func BenchmarkBytesBufferAppendSprintf(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		var msg bytes.Buffer
-		msg.WriteString(fmt.Sprintf("userid : %d", 1))
-		msg.WriteString(fmt.Sprintf("location : %s", "ab"))
-	}
-}
-----
-
-image::string_bench.png[]
-
-fmt.打印系列大部分会造成变量逃逸(interface 参数)。
-
-== 全局优化
-
-寻找程序的整体瓶颈。
-
-wrk、pprof、压测平台
-
-== 性能瓶颈举例
-
-=== 业务逻辑
-
-* 查数据库本来 in 查询就可以了，但是却 for 循环查。
-TODO
-
 === 序列化 CPU 占用过高
 
 寻找一些针对性进行过优化的库，或者从文本协议更换为二进制协议。
+
+比如 k8s 为了性能就集成了 jsoniter。
 
 === 算法时间复杂度
 
@@ -199,9 +180,39 @@ runtime 里的算法优化：
 
 === 过多的系统调用
 
-合并调用，writev？
+合并调用，writev？但是合并的 syscall 延迟可能会上升。
 
 === 过多的对象
+
+[WARNING]
+====
+字符串操作
+====
+
+用加号连接，和 Sprintf 差别还是比较大的：
+
+[source,go]
+----
+func BenchmarkBytesBufferAppend(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		var msg bytes.Buffer
+		msg.WriteString("userid : " + "1")
+		msg.WriteString("location : " + "ab")
+	}
+}
+
+func BenchmarkBytesBufferAppendSprintf(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		var msg bytes.Buffer
+		msg.WriteString(fmt.Sprintf("userid : %d", 1))
+		msg.WriteString(fmt.Sprintf("location : %s", "ab"))
+	}
+}
+----
+
+image::string_bench.png[]
+
+fmt.打印系列大部分会造成变量逃逸(interface 参数)。
 
 ==== sync.Pool
 
@@ -227,11 +238,38 @@ https://github.com/coocood/freecache
 
 https://github.com/allegro/bigcache
 
-==== 减少变量逃逸
+==== 减少指针类型变量逃逸
 
 使用 go build -gcflags="-m -m" 来分析逃逸。
 
 如果要分析某个 package 内的逃逸情况，可以打全 package 名，例如 go build -gcflags="-m -m" github.com/cch123/elasticsql
+
+string 类型天然就是带指针的类型，比如一些 cache 服务，有几千万 entry，那么用 string 来做 key 和 value 可能成本就很高。
+
+[TIP]
+====
+减少指针的手段：
+====
+
+用值类型代替指针类型，比如：
+
+[source,go]
+----
+*int -> struct {value int, isNull bool}
+
+string -> struct {value [12]byte, length int)
+
+数值类型的 string -> int
+
+*Host -> Host
+----
+
+[TIP]
+====
+减少逃逸的手段:
+====
+
+* 尽量少用 fmt.Print、fmt.Sprint 系列的函数。
 
 === 过多的调度 CPU 占用(例如火焰图中，schedule 有一大条)
 
@@ -383,15 +421,81 @@ https://github.com/gonum/gonum/tree/master/internal/asm/f64
 
 === 越压越差
 
+runtime 虽然会对 g 结构体进行 cache 和复用，但在瞬时的高峰时，可能产生同时在执行的大量 goroutine，这些 goroutine 会导致：
+
+[source,go]
+---- 
+var (
+	allgs    []*g
+	allglock mutex
+)
+----
+
+runtime 中上面的 allgs 这个数组变大，比如你并发产生了 100000 个 goroutine，那么在高峰过后，即使不再服务任何请求，你的进程占用的 CPU 也会比高峰之前多。
+
+[source,go]
+----
+package main
+
+import (
+	"log"
+	"net/http"
+	_ "net/http/pprof"
+	"time"
+)
+
+func sayhello(wr http.ResponseWriter, r *http.Request) {}
+
+func main() {
+	for i := 0; i < 1000000; i++ {
+		go func() {
+			time.Sleep(time.Second * 10)
+		}()
+	}
+	http.HandleFunc("/", sayhello)
+	err := http.ListenAndServe(":9090", nil)
+	if err != nil {
+		log.Fatal("ListenAndServe:", err)
+	}
+}
+----
+
+可以在你的机器上跑跑上面这个程序，用下面的 python 脚本来验证：
+
+[source,python]
+----
+import psutil
+import time
+
+p = psutil.Process(1) # 改成你自己的 pid 就行了
+
+while 1:
+    v = str(p.cpu_percent())
+    if "0.0" != v:
+        print(v, time.time())
+    time.sleep(1)
+
+----
+
 === 调度和锁
 
-调度 + 锁出问题，难复现，难定位
+调度 + 锁出问题，难复现，难定位。
+
+比如高压力下，刚拿到锁就被调度走了(可能因为正好发生了 GC)，且导致大量的其它需要获取锁的 goroutine 阻塞。
+
+
+[quote]
+____
+Authors of parallel programs have known for decades that performance can suffer badly if a thread is preempted while holding a lock; this is sometimes referred to as inopportune preemption.
+____
 
 === 不注意造成死循环会让整个进程 hang 住
 
 GC 需要抢占所有 goroutine，老版本的抢占需要用户协程在 morestack 时主动退出。
 
 卡 gcwaiting。
+
+perf top 可解。
 
 === 物理机负载高时，延迟非线性增长
 
@@ -432,3 +536,11 @@ sync.Pool 的设计思路：尽量从本地拿到 cache 对象，拿不到通过
 https://storage.googleapis.com/pub-tools-public-publication-data/pdf/36575.pdf
 
 image::con_perf.png[]
+
+推荐材料：
+
+http://team.jiunile.com/blog/2020/05/go-performance.html
+
+https://dave.cheney.net/high-performance-go-workshop/dotgo-paris.html
+
+https://github.com/dgryski/go-perfbook/blob/master/performance.md
