@@ -453,7 +453,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="true优化工作流"><a class="anchor" href="#true优化工作流"></a>优化工作流</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>建立评估指标(eg. Latency) &#8594; 提出解决方案 &#8594; 尝试方案</p>
+<p>建立评估指标(eg. Latency) &#8594; 定位瓶颈(一般都会定位到某个局部) &#8594; 寻找局部解决问题方案 &#8594; 尝试方案</p>
 </div>
 <div class="paragraph">
 <p>不断重复</p>
@@ -710,7 +710,7 @@ func BenchmarkBytesBufferAppendSprintf(b *testing.B) {
 <p>sync.Pool 才能实现 zero garbage。benchmark 中的 0 alloc，其实是因为对象有复用，alloc 平均 &lt; 1。</p>
 </div>
 <div class="paragraph">
-<p>struct 可以复用，slice 可以复用，但 map 不太好复用。比如 fasthttp 里，把本来应该是 map 的 header 结构变成了 slice，牺牲一点查询速度，换来了复用的方便。</p>
+<p>struct 可以复用(需要注意把老字段清零或每次都会覆盖)，slice 可以复用(a = a[:0])，但 map 不太好复用(得把所有 kv 全清空才行，成本可能比新建一个还要高)。比如 fasthttp 里，把本来应该是 map 的 header 结构变成了 slice，牺牲一点查询速度，换来了复用的方便。</p>
 </div>
 <div class="paragraph">
 <p>复用本身可能导致 bug，例如：</p>
@@ -718,15 +718,26 @@ func BenchmarkBytesBufferAppendSprintf(b *testing.B) {
 <div class="ulist">
 <ul>
 <li>
-<p>拿出时不 Reset</p>
+<p>拿出时不 Reset，内含脏数据:</p>
 </li>
 <li>
 <p>slice 缩容时，被缩掉对象如果不置 nil，是不会释放的</p>
 </li>
 <li>
-<p>在 Put 回 Pool 时，不判断大小，导致了进程占内存越来越大</p>
+<p>在 Put 回 Pool 时，不判断大小，导致了进程占内存越来越大(标准库发生过这样的问题，在用户看起来，整个进程占用的内存一直在上涨，像是泄露一样)</p>
 </li>
 </ul>
+</div>
+<div class="paragraph">
+<p>第二点可以看下面这张图理解一下：</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="subslice.png" alt="subslice">
+</div>
+</div>
+<div class="paragraph">
+<p>a = a[:1]，如果后面的元素都是指针，都指向了 500MB 的一个大 buffer，没法释放，GC 认为你还是持有引用的。这种情况需要自己先把后面的元素全置为 nil，再缩容。</p>
 </div>
 </div>
 <div class="sect3">
@@ -1269,7 +1280,7 @@ func main() {
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-09-10 15:53:00 +0800
+Last updated 2020-09-10 16:06:49 +0800
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/github.min.css">
