@@ -140,7 +140,11 @@ func BenchmarkUUIDLib(b *testing.B) {
 
 runtime 里的算法优化：
 
-```
+
+
+
+[ditaa,file="runtime_opt.png"]
+----
                      ┌──────────────────────┐                                       
                      │                      │                                       
                      │                      │                                       
@@ -176,7 +180,11 @@ runtime 里的算法优化：
                             │                      │        │                      │
                             │                      │        │                      │
                             └──────────────────────┘        └──────────────────────┘
-```
+
+
+----
+
+
 
 === 过多的系统调用
 
@@ -218,7 +226,7 @@ fmt.打印系列大部分会造成变量逃逸(interface 参数)。
 
 sync.Pool 才能实现 zero garbage。benchmark 中的 0 alloc，其实是因为对象有复用，alloc 平均 < 1。
 
-struct 可以复用，slice 可以复用，但 map 不太好复用。
+struct 可以复用，slice 可以复用，但 map 不太好复用。比如 fasthttp 里，把本来应该是 map 的 header 结构变成了 slice，牺牲一点查询速度，换来了复用的方便。
 
 复用本身可能导致 bug，例如：
 
@@ -275,7 +283,7 @@ string -> struct {value [12]byte, length int)
 
 类似 fasthttp 的 workerpool。
 
-https://github.com/valyala/fasthttp/blob/master/workerpool.go#L19
+https://github.com/valyala/fasthttp/blob/master/workerpool.go#L19[worker pool in fasthttp]
 
 创建好的 goroutine 可以反复使用，并且自己实现可以控制最大的并发 worker 数。
 
@@ -295,7 +303,7 @@ https://github.com/valyala/fasthttp/blob/master/workerpool.go#L19
 
 参考本文中的第一个案例：
 
-https://xargin.com/lock-contention-in-go/
+https://xargin.com/lock-contention-in-go/[lock contention]
 
 ==== 解决方案
 
@@ -378,7 +386,7 @@ ____
 
 === timer 性能问题
 
-* 老版本的 timer 会有高压力下触发不准时问题，且触发大量的 syscall -> https://github.com/golang/go/issues/25471
+* 老版本的 timer 会有高压力下触发不准时问题，且触发大量的 syscall -> https://github.com/golang/go/issues/25471[Go issue 25471]
 [source, text]
 ----
 // xiaorui.cc
@@ -415,7 +423,7 @@ ticker 使用时要尤其注意泄露问题，否则程序 CPU 使用会逐渐�
 SIMD 优化，如 math 库。gonum 中也有一些例子。
 无法跨平台，如未来碰到国产化需求要上 ARM、龙芯(MIPS) 就尴尬了。
 
-https://github.com/gonum/gonum/tree/master/internal/asm/f64
+https://github.com/gonum/gonum/tree/master/internal/asm/f64[gonum 中的汇编优化]
 
 == 语言本身的一些缺陷
 
@@ -503,9 +511,32 @@ perf top 可解。
 
 === 调度导致 CPU 密集型业务超时
 
-TODO，bcrypt 的例子
+[source, c]
+----
+package main
 
-因为调度导致的全部超时
+import "fmt"
+import "golang.org/x/crypto/bcrypt"
+import "time"
+
+func test(cost int, id int) {
+	startTime := time.Now()
+	code, _ := bcrypt.GenerateFromPassword([]byte("password"), cost)
+	fmt.Println(time.Since(startTime), "END test ", id, code[0])
+}
+
+func main() {
+	startTime := time.Now()
+	code, _ := bcrypt.GenerateFromPassword([]byte("password"), 15)
+	fmt.Println(time.Since(startTime), "END test ", -1, code[0], "\n")
+
+	// 修改 4 为不同的值，猜猜结果？
+	for i := 0; i < 4; i++ {
+		go test(15, i)
+	}
+	time.Sleep(1e16)
+}
+----
 
 === 老版本的问题
 
@@ -533,14 +564,18 @@ sync.Pool 的设计思路：尽量从本地拿到 cache 对象，拿不到通过
 
 早发现，早治疗，晚发现，成本高。
 
-https://storage.googleapis.com/pub-tools-public-publication-data/pdf/36575.pdf
+https://storage.googleapis.com/pub-tools-public-publication-data/pdf/36575.pdf[google 论文]
 
 image::con_perf.png[]
 
 推荐材料：
 
-http://team.jiunile.com/blog/2020/05/go-performance.html
+http://team.jiunile.com/blog/2020/05/go-performance.html[一篇中文总结]
 
-https://dave.cheney.net/high-performance-go-workshop/dotgo-paris.html
+https://dave.cheney.net/high-performance-go-workshop/dotgo-paris.html[go performance workshop]
 
-https://github.com/dgryski/go-perfbook/blob/master/performance.md
+https://github.com/dgryski/go-perfbook/blob/master/performance.md[go-perfbook]
+
+https://github.com/cch123/knowledge-index/blob/master/high_perf/Performance%20optimization_%20Pros%20%26%20Cons.pdf[fasthttp 作者的性能优化分享]
+
+https://github.com/cch123/knowledge-index/blob/master/high_perf/Performance_optimization_sins_-_Aliaksandr_Valialkin.pdf[fasthttp 作者的性能优化分享2]

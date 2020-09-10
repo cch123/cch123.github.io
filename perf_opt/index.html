@@ -648,43 +648,9 @@ func BenchmarkUUIDLib(b *testing.B) {
 <div class="paragraph">
 <p>runtime 里的算法优化：</p>
 </div>
-<div class="listingblock">
+<div class="imageblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-none hljs">                     ┌──────────────────────┐
-                     │                      │
-                     │                      │
-                     │    npagesKey: 130    │
-                     │  spanKey: 0x1234567  │
-                     │     priority: 1      │
-                     │                      │
-                     │                      │
-                     └──────────────────────┘
-                                 │
-            ┌────────────────────┴──────────────────┐
-            │                                       │
-            ▼                                       ▼
-┌──────────────────────┐                ┌──────────────────────┐
-│                      │                │                      │
-│                      │                │                      │
-│    npagesKey: 129    │                │    npagesKey: 132    │
-│  spanKey: 0x4231560  │                │  spanKey: 0x2234521  │
-│     priority: 10     │                │     priority: 12     │
-│                      │                │                      │
-│                      │                │                      │
-└──────────────────────┘                └──────────────────────┘
-                                                    │
-                                        ┌───────────┴───────────────────┐
-                                        │                               │
-                                        ▼                               ▼
-                            ┌──────────────────────┐        ┌──────────────────────┐
-                            │                      │        │                      │
-                            │                      │        │                      │
-                            │    npagesKey: 132    │        │    npagesKey: 136    │
-                            │  spanKey: 0x2234000  │        │  spanKey: 0x2314213  │
-                            │     priority: 14     │        │    priority: 131     │
-                            │                      │        │                      │
-                            │                      │        │                      │
-                            └──────────────────────┘        └──────────────────────┘</code></pre>
+<img src="runtime_opt.png" alt="runtime opt">
 </div>
 </div>
 </div>
@@ -746,7 +712,7 @@ func BenchmarkBytesBufferAppendSprintf(b *testing.B) {
 <p>sync.Pool 才能实现 zero garbage。benchmark 中的 0 alloc，其实是因为对象有复用，alloc 平均 &lt; 1。</p>
 </div>
 <div class="paragraph">
-<p>struct 可以复用，slice 可以复用，但 map 不太好复用。</p>
+<p>struct 可以复用，slice 可以复用，但 map 不太好复用。比如 fasthttp 里，把本来应该是 map 的 header 结构变成了 slice，牺牲一点查询速度，换来了复用的方便。</p>
 </div>
 <div class="paragraph">
 <p>复用本身可能导致 bug，例如：</p>
@@ -851,7 +817,7 @@ string -&gt; struct {value [12]byte, length int)
 <p>类似 fasthttp 的 workerpool。</p>
 </div>
 <div class="paragraph">
-<p><a href="https://github.com/valyala/fasthttp/blob/master/workerpool.go#L19" class="bare">https://github.com/valyala/fasthttp/blob/master/workerpool.go#L19</a></p>
+<p><a href="https://github.com/valyala/fasthttp/blob/master/workerpool.go#L19">worker pool in fasthttp</a></p>
 </div>
 <div class="paragraph">
 <p>创建好的 goroutine 可以反复使用，并且自己实现可以控制最大的并发 worker 数。</p>
@@ -880,7 +846,7 @@ string -&gt; struct {value [12]byte, length int)
 <p>参考本文中的第一个案例：</p>
 </div>
 <div class="paragraph">
-<p><a href="https://xargin.com/lock-contention-in-go/" class="bare">https://xargin.com/lock-contention-in-go/</a></p>
+<p><a href="https://xargin.com/lock-contention-in-go/">lock contention</a></p>
 </div>
 </div>
 <div class="sect3">
@@ -989,7 +955,7 @@ string -&gt; struct {value [12]byte, length int)
 <div class="ulist">
 <ul>
 <li>
-<p>老版本的 timer 会有高压力下触发不准时问题，且触发大量的 syscall &#8594; <a href="https://github.com/golang/go/issues/25471" class="bare">https://github.com/golang/go/issues/25471</a></p>
+<p>老版本的 timer 会有高压力下触发不准时问题，且触发大量的 syscall &#8594; <a href="https://github.com/golang/go/issues/25471">Go issue 25471</a></p>
 </li>
 </ul>
 </div>
@@ -1039,7 +1005,7 @@ go1.14
 无法跨平台，如未来碰到国产化需求要上 ARM、龙芯(MIPS) 就尴尬了。</p>
 </div>
 <div class="paragraph">
-<p><a href="https://github.com/gonum/gonum/tree/master/internal/asm/f64" class="bare">https://github.com/gonum/gonum/tree/master/internal/asm/f64</a></p>
+<p><a href="https://github.com/gonum/gonum/tree/master/internal/asm/f64">gonum 中的汇编优化</a></p>
 </div>
 </div>
 </div>
@@ -1144,11 +1110,32 @@ while 1:
 </div>
 <div class="sect2">
 <h3 id="true调度导致-cpu-密集型业务超时"><a class="anchor" href="#true调度导致-cpu-密集型业务超时"></a>调度导致 CPU 密集型业务超时</h3>
-<div class="paragraph">
-<p>TODO，bcrypt 的例子</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="c" class="language-c hljs">package main
+
+import "fmt"
+import "golang.org/x/crypto/bcrypt"
+import "time"
+
+func test(cost int, id int) {
+	startTime := time.Now()
+	code, _ := bcrypt.GenerateFromPassword([]byte("password"), cost)
+	fmt.Println(time.Since(startTime), "END test ", id, code[0])
+}
+
+func main() {
+	startTime := time.Now()
+	code, _ := bcrypt.GenerateFromPassword([]byte("password"), 15)
+	fmt.Println(time.Since(startTime), "END test ", -1, code[0], "\n")
+
+	// 修改 4 为不同的值，猜猜结果？
+	for i := 0; i &lt; 4; i++ {
+		go test(15, i)
+	}
+	time.Sleep(1e16)
+}</code></pre>
 </div>
-<div class="paragraph">
-<p>因为调度导致的全部超时</p>
 </div>
 </div>
 <div class="sect2">
@@ -1189,7 +1176,7 @@ while 1:
 <p>早发现，早治疗，晚发现，成本高。</p>
 </div>
 <div class="paragraph">
-<p><a href="https://storage.googleapis.com/pub-tools-public-publication-data/pdf/36575.pdf" class="bare">https://storage.googleapis.com/pub-tools-public-publication-data/pdf/36575.pdf</a></p>
+<p><a href="https://storage.googleapis.com/pub-tools-public-publication-data/pdf/36575.pdf">google 论文</a></p>
 </div>
 <div class="imageblock">
 <div class="content">
@@ -1200,13 +1187,19 @@ while 1:
 <p>推荐材料：</p>
 </div>
 <div class="paragraph">
-<p><a href="http://team.jiunile.com/blog/2020/05/go-performance.html" class="bare">http://team.jiunile.com/blog/2020/05/go-performance.html</a></p>
+<p><a href="http://team.jiunile.com/blog/2020/05/go-performance.html">一篇中文总结</a></p>
 </div>
 <div class="paragraph">
-<p><a href="https://dave.cheney.net/high-performance-go-workshop/dotgo-paris.html" class="bare">https://dave.cheney.net/high-performance-go-workshop/dotgo-paris.html</a></p>
+<p><a href="https://dave.cheney.net/high-performance-go-workshop/dotgo-paris.html">go performance workshop</a></p>
 </div>
 <div class="paragraph">
-<p><a href="https://github.com/dgryski/go-perfbook/blob/master/performance.md" class="bare">https://github.com/dgryski/go-perfbook/blob/master/performance.md</a></p>
+<p><a href="https://github.com/dgryski/go-perfbook/blob/master/performance.md">go-perfbook</a></p>
+</div>
+<div class="paragraph">
+<p><a href="https://github.com/cch123/knowledge-index/blob/master/high_perf/Performance%20optimization_%20Pros%20%26%20Cons.pdf">fasthttp 作者的性能优化分享</a></p>
+</div>
+<div class="paragraph">
+<p><a href="https://github.com/cch123/knowledge-index/blob/master/high_perf/Performance_optimization_sins_-_Aliaksandr_Valialkin.pdf">fasthttp 作者的性能优化分享2</a></p>
 </div>
 </div>
 </div>
@@ -1215,7 +1208,7 @@ while 1:
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-09-10 14:50:21 +0800
+Last updated 2020-09-10 15:30:26 +0800
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/github.min.css">
