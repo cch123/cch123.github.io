@@ -481,7 +481,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </blockquote>
 </div>
 <div class="paragraph">
-<p>每秒被唤醒 100 次，记录每个线程上的栈。</p>
+<p>每秒被唤醒 100 次，记录每个线程上的栈，那些等待 IO 被 gopark 之类挂起的 goroutine 不会被采集到，因为不在线程上运行，gopark 挂起 goroutine 后，当前线程一般会进 schedule &#8594; findrunnable 的调度循环。</p>
 </div>
 </div>
 <div class="sect2">
@@ -499,6 +499,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="paragraph">
 <p>可以用来诊断 CPU、IO 混合的执行时间占比。</p>
 </div>
+<div class="paragraph">
+<p>这个成本还是比普通的 pprof 高一些的。</p>
+</div>
 </div>
 <div class="sect2">
 <h3 id="truetrace"><a class="anchor" href="#truetrace"></a>trace</h3>
@@ -508,11 +511,41 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="paragraph">
 <p>基本原理是在 runtime 中埋了大量点，记录一堆 event 来追踪 runtime 执行流程。</p>
 </div>
+<div class="paragraph">
+<p>如果对一些调度问题有疑问，可以在 trace 里做观察，不过拿来定位问题还是比较费劲的。</p>
+</div>
+<div class="paragraph">
+<p><a href="https://xargin.com/a-rlock-story/" class="bare">https://xargin.com/a-rlock-story/</a></p>
+</div>
 </div>
 <div class="sect2">
 <h3 id="trueperf"><a class="anchor" href="#trueperf"></a>perf</h3>
 <div class="paragraph">
-<p>perf 也是可以用的。</p>
+<p>perf 也是可以用的，比如线上没开 pprof 的时候，发现 CPU 炸了，perf 可以看看到底在干啥，因为 Go 默认会把 DWARF 调试信息带进二进制文件中，通过 perf 的 zoom 功能也可以一直看到哪行代码(或者是汇编)占用了比较高的 CPU。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="text" class="language-text hljs">$ perf stat -e task-clock,cycles,instructions,cache-references,cache-misses ./hello
+yyyy
+
+ Performance counter stats for './hello':
+
+          1.464376      task-clock (msec)         #    0.979 CPUs utilized
+         3,681,288      cycles                    #    2.514 GHz
+         1,722,170      instructions              #    0.47  insn per cycle
+            46,475      cache-references          #   31.737 M/sec
+            21,479      cache-misses              #   46.216 % of all cache refs
+
+       0.001495925 seconds time elapsed</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>perf top</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="perf.png" alt="perf">
+</div>
 </div>
 </div>
 </div>
@@ -643,6 +676,48 @@ TODO</p>
 <div class="paragraph">
 <p>显而易见，O(logn) 和 O(n)，O(logn) 最多就 64 次，而 O(n) 可能耗尽计算资源。</p>
 </div>
+<div class="paragraph">
+<p>runtime 里的算法优化：</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">                     ┌──────────────────────┐
+                     │                      │
+                     │                      │
+                     │    npagesKey: 130    │
+                     │  spanKey: 0x1234567  │
+                     │     priority: 1      │
+                     │                      │
+                     │                      │
+                     └──────────────────────┘
+                                 │
+            ┌────────────────────┴──────────────────┐
+            │                                       │
+            ▼                                       ▼
+┌──────────────────────┐                ┌──────────────────────┐
+│                      │                │                      │
+│                      │                │                      │
+│    npagesKey: 129    │                │    npagesKey: 132    │
+│  spanKey: 0x4231560  │                │  spanKey: 0x2234521  │
+│     priority: 10     │                │     priority: 12     │
+│                      │                │                      │
+│                      │                │                      │
+└──────────────────────┘                └──────────────────────┘
+                                                    │
+                                        ┌───────────┴───────────────────┐
+                                        │                               │
+                                        ▼                               ▼
+                            ┌──────────────────────┐        ┌──────────────────────┐
+                            │                      │        │                      │
+                            │                      │        │                      │
+                            │    npagesKey: 132    │        │    npagesKey: 136    │
+                            │  spanKey: 0x2234000  │        │  spanKey: 0x2314213  │
+                            │     priority: 14     │        │    priority: 131     │
+                            │                      │        │                      │
+                            │                      │        │                      │
+                            └──────────────────────┘        └──────────────────────┘</code></pre>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="true过多的系统调用"><a class="anchor" href="#true过多的系统调用"></a>过多的系统调用</h3>
@@ -681,6 +756,18 @@ TODO</p>
 <h4 id="trueoffheap"><a class="anchor" href="#trueoffheap"></a>offheap</h4>
 <div class="paragraph">
 <p>如果数据不可变，只作查询，也可以考虑 offheap，但局限性较大。</p>
+</div>
+<div class="paragraph">
+<p>下面三个库可以看看。</p>
+</div>
+<div class="paragraph">
+<p><a href="https://github.com/glycerine/offheap" class="bare">https://github.com/glycerine/offheap</a></p>
+</div>
+<div class="paragraph">
+<p><a href="https://github.com/coocood/freecache" class="bare">https://github.com/coocood/freecache</a></p>
+</div>
+<div class="paragraph">
+<p><a href="https://github.com/allegro/bigcache" class="bare">https://github.com/allegro/bigcache</a></p>
 </div>
 </div>
 <div class="sect3">
@@ -725,7 +812,10 @@ TODO</p>
 <p>有些开源库设计是一个 struct 对应一个 sync.Pool，这种时候，如果你不对该 struct 进行复用，就会触发 runtime 中的锁冲突：</p>
 </div>
 <div class="paragraph">
-<p>TODO</p>
+<p>参考本文中的第一个案例：</p>
+</div>
+<div class="paragraph">
+<p><a href="https://xargin.com/lock-contention-in-go/" class="bare">https://xargin.com/lock-contention-in-go/</a></p>
 </div>
 </div>
 <div class="sect3">
@@ -733,16 +823,16 @@ TODO</p>
 <div class="ulist">
 <ul>
 <li>
-<p>map &#8594; sync.Map。</p>
+<p>map &#8594; sync.Map</p>
 </li>
 <li>
-<p>换用无锁结构。</p>
+<p>换用无锁结构，如 lock free queue、stack 等</p>
 </li>
 <li>
 <p>分段锁</p>
 </li>
 <li>
-<p>copy on write</p>
+<p>copy on write，业务逻辑允许的前提下，在修改时拷贝一份，再修改</p>
 </li>
 </ul>
 </div>
@@ -755,49 +845,39 @@ TODO</p>
 <div class="paragraph">
 <p>时间局部性、空间局部性</p>
 </div>
-<div class="exampleblock">
+<div class="listingblock">
 <div class="content">
-<div class="paragraph">
-<p>var semtable [semTabSize]struct {
+<pre class="highlightjs highlight"><code data-lang="go" class="language-go hljs">var semtable [semTabSize]struct {
 	root semaRoot
 	pad  [cpu.CacheLinePadSize - unsafe.Sizeof(semaRoot{})]byte
-}</p>
+}</code></pre>
 </div>
 </div>
-</div>
-<div class="exampleblock">
+<div class="listingblock">
 <div class="content">
-<div class="paragraph">
-<p>var timers [timersLen]struct {
-	timersBucket</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>	// The padding should eliminate false sharing
+<pre class="highlightjs highlight"><code data-lang="go" class="language-go hljs">var timers [timersLen]struct {
+	timersBucket
+
+	// The padding should eliminate false sharing
 	// between timersBucket values.
 	pad [cpu.CacheLinePadSize - unsafe.Sizeof(timersBucket{})%cpu.CacheLinePadSize]byte
-}</pre>
-</div>
-</div>
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
 <p>类似下面的二维数组，怎么遍历更快？</p>
 </div>
-<div class="exampleblock">
+<div class="listingblock">
 <div class="content">
-<div class="paragraph">
-<p>var a = [10000][10000]int{}</p>
-</div>
+<pre class="highlightjs highlight"><code data-lang="go" class="language-go hljs">var a = [10000][10000]int{}</code></pre>
 </div>
 </div>
 <div class="paragraph">
 <p>在标准库中，考虑到局部性而实现的 sort 的例子：</p>
 </div>
-<div class="exampleblock">
+<div class="listingblock">
 <div class="content">
-<div class="paragraph">
-<p>func quickSort_func(data lessSwap, a, b, maxDepth int) {
+<pre class="highlightjs highlight"><code data-lang="go" class="language-go hljs">func quickSort_func(data lessSwap, a, b, maxDepth int) {
 	for b-a &gt; 12 {
 		if maxDepth == 0 {
 			heapSort_func(data, a, b)
@@ -821,8 +901,7 @@ TODO</p>
 		}
 		insertionSort_func(data, a, b)
 	}
-}</p>
-</div>
+}</code></pre>
 </div>
 </div>
 </div>
@@ -845,34 +924,34 @@ TODO</p>
 <div class="ulist">
 <ul>
 <li>
-<p>老版本的 timer 会有大量的 syscall &#8594; <a href="https://github.com/golang/go/issues/25471" class="bare">https://github.com/golang/go/issues/25471</a></p>
+<p>老版本的 timer 会有高压力下触发不准时问题，且触发大量的 syscall &#8594; <a href="https://github.com/golang/go/issues/25471" class="bare">https://github.com/golang/go/issues/25471</a></p>
 </li>
 </ul>
 </div>
-<div class="exampleblock">
+<div class="listingblock">
 <div class="content">
-<div class="paragraph">
-<p>go1.13</p>
-</div>
-<div class="paragraph">
-<p>% time     seconds  usecs/call     calls    errors syscall
+<pre>// xiaorui.cc
+
+go1.13
+
+% time     seconds  usecs/call     calls    errors syscall
 ------ ----------- ----------- --------- --------- ----------------
  84.00   12.007993         459     26148      3874 futex
  11.43    1.634512         146     11180           nanosleep
-  4.45    0.635987          32     20185           sched_yield</p>
-</div>
-<div class="paragraph">
-<p>go1.14</p>
-</div>
-<div class="paragraph">
-<p>% time     seconds  usecs/call     calls    errors syscall
+  4.45    0.635987          32     20185           sched_yield
+
+go1.14
+
+% time     seconds  usecs/call     calls    errors syscall
 ------ ----------- ----------- --------- --------- ----------------
  58.78    4.837332         174     27770      4662 futex
  19.50    1.605189         440      3646           nanosleep
  11.55    0.950730          44     21569           epoll_pwait
-  9.75    0.802715          36     22181           sched_yield:w</p>
+  9.75    0.802715          36     22181           sched_yield:w</pre>
 </div>
 </div>
+<div class="paragraph">
+<p>优化后，CPU 占用降低，到时不触发的问题也有所改善。</p>
 </div>
 <div class="ulist">
 <ul>
@@ -883,6 +962,9 @@ TODO</p>
 </div>
 <div class="paragraph">
 <p>可以搜搜大量的 timewheel 库。</p>
+</div>
+<div class="paragraph">
+<p>ticker 使用时要尤其注意泄露问题，否则程序 CPU 使用会逐渐上涨。</p>
 </div>
 </div>
 <div class="sect2">
@@ -922,7 +1004,7 @@ TODO</p>
 <div class="sect2">
 <h3 id="true物理机负载高时延迟非线性增长"><a class="anchor" href="#true物理机负载高时延迟非线性增长"></a>物理机负载高时，延迟非线性增长</h3>
 <div class="paragraph">
-<p>TODO</p>
+<p>压力高会导致响应慢，响应慢会导致并发执行的 goroutine 数变多，响应结束后的垃圾变多，同时会导致更高的调度成本和 GC 扫描成本，级联恶化。</p>
 </div>
 </div>
 <div class="sect2">
@@ -940,6 +1022,12 @@ TODO</p>
 <h4 id="truesync-pool-在-gc-时全清空"><a class="anchor" href="#truesync-pool-在-gc-时全清空"></a>sync.Pool 在 GC 时全清空</h4>
 <div class="paragraph">
 <p>导致在每一轮 GC 后都有延迟抖动，升级 1.13 后长尾请求有改善。</p>
+</div>
+<div class="paragraph">
+<p>sync.Pool 的设计思路：尽量从本地拿到 cache 对象，拿不到通过无锁 shared 队列去找，还是找不到，全局 lock 找或者生成新的。</p>
+</div>
+<div class="paragraph">
+<p>这种思路比较类似 L1 &#8594; L2 &#8594; L3 的多级缓存设计，runtime 的内存分配演进也是类似的思路。</p>
 </div>
 </div>
 </div>
@@ -960,7 +1048,18 @@ TODO</p>
 <div class="sect3">
 <h4 id="truecontinuous-profiling"><a class="anchor" href="#truecontinuous-profiling"></a>continuous profiling</h4>
 <div class="paragraph">
-<p>早发现，早治疗。</p>
+<p>在生产环境对更细粒度的程序性能做实时监控，方便及时发现、定位、分析问题。</p>
+</div>
+<div class="paragraph">
+<p>早发现，早治疗，晚发现，成本高。</p>
+</div>
+<div class="paragraph">
+<p><a href="https://storage.googleapis.com/pub-tools-public-publication-data/pdf/36575.pdf" class="bare">https://storage.googleapis.com/pub-tools-public-publication-data/pdf/36575.pdf</a></p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="con_perf.png" alt="con perf">
+</div>
 </div>
 </div>
 </div>
@@ -969,7 +1068,7 @@ TODO</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-09-10 01:34:10 +0800
+Last updated 2020-09-10 14:23:00 +0800
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/github.min.css">

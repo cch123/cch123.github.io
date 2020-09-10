@@ -23,7 +23,7 @@ The builtin Go CPU profiler uses the setitimer(2) system call to ask the operati
 Since Go uses non-blocking I/O, Goroutines that wait on I/O are parked and not running on any threads. Therefore they end up being largely invisible to Go's builtin CPU profiler.
 ____
 
-每秒被唤醒 100 次，记录每个线程上的栈。
+每秒被唤醒 100 次，记录每个线程上的栈，那些等待 IO 被 gopark 之类挂起的 goroutine 不会被采集到，因为不在线程上运行，gopark 挂起 goroutine 后，当前线程一般会进 schedule -> findrunnable 的调度循环。
 
 === fgprof
 
@@ -36,15 +36,41 @@ ____
 
 可以用来诊断 CPU、IO 混合的执行时间占比。
 
+这个成本还是比普通的 pprof 高一些的。
+
 === trace
 
 一般用来诊断一些诡异的抖动问题，或 runtime 的 bug(或者用来学习 runtime 的执行流)，用来做问题诊断效果一般。
 
 基本原理是在 runtime 中埋了大量点，记录一堆 event 来追踪 runtime 执行流程。
 
+如果对一些调度问题有疑问，可以在 trace 里做观察，不过拿来定位问题还是比较费劲的。
+
+https://xargin.com/a-rlock-story/
+
 === perf
 
-perf 也是可以用的。
+perf 也是可以用的，比如线上没开 pprof 的时候，发现 CPU 炸了，perf 可以看看到底在干啥，因为 Go 默认会把 DWARF 调试信息带进二进制文件中，通过 perf 的 zoom 功能也可以一直看到哪行代码(或者是汇编)占用了比较高的 CPU。
+
+[source, text]
+----
+$ perf stat -e task-clock,cycles,instructions,cache-references,cache-misses ./hello
+yyyy
+
+ Performance counter stats for './hello':
+
+          1.464376      task-clock (msec)         #    0.979 CPUs utilized
+         3,681,288      cycles                    #    2.514 GHz
+         1,722,170      instructions              #    0.47  insn per cycle
+            46,475      cache-references          #   31.737 M/sec
+            21,479      cache-misses              #   46.216 % of all cache refs
+
+       0.001495925 seconds time elapsed
+----
+
+perf top
+
+image::perf.png[]
 
 == 局部优化
 
@@ -131,6 +157,46 @@ TODO
 
 显而易见，O(logn) 和 O(n)，O(logn) 最多就 64 次，而 O(n) 可能耗尽计算资源。
 
+runtime 里的算法优化：
+
+```
+                     ┌──────────────────────┐                                       
+                     │                      │                                       
+                     │                      │                                       
+                     │    npagesKey: 130    │                                       
+                     │  spanKey: 0x1234567  │                                       
+                     │     priority: 1      │                                       
+                     │                      │                                       
+                     │                      │                                       
+                     └──────────────────────┘                                       
+                                 │                                                  
+            ┌────────────────────┴──────────────────┐                               
+            │                                       │                               
+            ▼                                       ▼                               
+┌──────────────────────┐                ┌──────────────────────┐                    
+│                      │                │                      │                    
+│                      │                │                      │                    
+│    npagesKey: 129    │                │    npagesKey: 132    │                    
+│  spanKey: 0x4231560  │                │  spanKey: 0x2234521  │                    
+│     priority: 10     │                │     priority: 12     │                    
+│                      │                │                      │                    
+│                      │                │                      │                    
+└──────────────────────┘                └──────────────────────┘                    
+                                                    │                               
+                                        ┌───────────┴───────────────────┐           
+                                        │                               │           
+                                        ▼                               ▼           
+                            ┌──────────────────────┐        ┌──────────────────────┐
+                            │                      │        │                      │
+                            │                      │        │                      │
+                            │    npagesKey: 132    │        │    npagesKey: 136    │
+                            │  spanKey: 0x2234000  │        │  spanKey: 0x2314213  │
+                            │     priority: 14     │        │    priority: 131     │
+                            │                      │        │                      │
+                            │                      │        │                      │
+                            └──────────────────────┘        └──────────────────────┘
+```
+
 === 过多的系统调用
 
 合并调用，writev？
@@ -152,6 +218,14 @@ struct 可以复用，slice 可以复用，但 map 不太好复用。
 ==== offheap
 
 如果数据不可变，只作查询，也可以考虑 offheap，但局限性较大。
+
+下面三个库可以看看。
+
+https://github.com/glycerine/offheap
+
+https://github.com/coocood/freecache
+
+https://github.com/allegro/bigcache
 
 ==== 减少变量逃逸
 
@@ -181,14 +255,16 @@ https://github.com/valyala/fasthttp/blob/master/workerpool.go#L19
 
 有些开源库设计是一个 struct 对应一个 sync.Pool，这种时候，如果你不对该 struct 进行复用，就会触发 runtime 中的锁冲突：
 
-TODO
+参考本文中的第一个案例：
+
+https://xargin.com/lock-contention-in-go/
 
 ==== 解决方案
 
-* map -> sync.Map。
-* 换用无锁结构。
+* map -> sync.Map
+* 换用无锁结构，如 lock free queue、stack 等
 * 分段锁
-* copy on write
+* copy on write，业务逻辑允许的前提下，在修改时拷贝一份，再修改
 
 === 程序局部性
 
@@ -197,15 +273,15 @@ TODO
 时间局部性、空间局部性
 
 [source, go]
-====
+----
 var semtable [semTabSize]struct {
 	root semaRoot
 	pad  [cpu.CacheLinePadSize - unsafe.Sizeof(semaRoot{})]byte
 }
-====
+----
 
 [source, go]
-====
+----
 var timers [timersLen]struct {
 	timersBucket
 
@@ -213,19 +289,19 @@ var timers [timersLen]struct {
 	// between timersBucket values.
 	pad [cpu.CacheLinePadSize - unsafe.Sizeof(timersBucket{})%cpu.CacheLinePadSize]byte
 }
-====
+----
 
 类似下面的二维数组，怎么遍历更快？
 
 [source, go]
-====
+----
 var a = [10000][10000]int{}
-====
+----
 
 在标准库中，考虑到局部性而实现的 sort 的例子：
 
 [source, go]
-====
+----
 func quickSort_func(data lessSwap, a, b, maxDepth int) {
 	for b-a > 12 {
 		if maxDepth == 0 {
@@ -251,7 +327,7 @@ func quickSort_func(data lessSwap, a, b, maxDepth int) {
 		insertionSort_func(data, a, b)
 	}
 }
-====
+----
 
 ==== true sharing
 
@@ -264,9 +340,9 @@ ____
 
 === timer 性能问题
 
-* 老版本的 timer 会有大量的 syscall -> https://github.com/golang/go/issues/25471
+* 老版本的 timer 会有高压力下触发不准时问题，且触发大量的 syscall -> https://github.com/golang/go/issues/25471
 [source, text]
-====
+----
 // xiaorui.cc
 
 go1.13
@@ -286,11 +362,15 @@ go1.14
  11.55    0.950730          44     21569           epoll_pwait
   9.75    0.802715          36     22181           sched_yield:w
 
-====
+----
+
+优化后，CPU 占用降低，到时不触发的问题也有所改善。
 
 * 用时间轮实现粗粒度的时间库
 
 可以搜搜大量的 timewheel 库。
+
+ticker 使用时要尤其注意泄露问题，否则程序 CPU 使用会逐渐上涨。
 
 === 汇编优化
 
@@ -315,7 +395,7 @@ GC 需要抢占所有 goroutine，老版本的抢占需要用户协程在 morest
 
 === 物理机负载高时，延迟非线性增长
 
-TODO
+压力高会导致响应慢，响应慢会导致并发执行的 goroutine 数变多，响应结束后的垃圾变多，同时会导致更高的调度成本和 GC 扫描成本，级联恶化。
 
 === 调度导致 CPU 密集型业务超时
 
@@ -329,6 +409,10 @@ TODO，bcrypt 的例子
 
 导致在每一轮 GC 后都有延迟抖动，升级 1.13 后长尾请求有改善。
 
+sync.Pool 的设计思路：尽量从本地拿到 cache 对象，拿不到通过无锁 shared 队列去找，还是找不到，全局 lock 找或者生成新的。
+
+这种思路比较类似 L1 -> L2 -> L3 的多级缓存设计，runtime 的内存分配演进也是类似的思路。
+
 === 当前问题定位工具的局限性
 
 难以定位抖动问题。
@@ -341,4 +425,10 @@ TODO，bcrypt 的例子
 
 ==== continuous profiling
 
-早发现，早治疗。
+在生产环境对更细粒度的程序性能做实时监控，方便及时发现、定位、分析问题。
+
+早发现，早治疗，晚发现，成本高。
+
+https://storage.googleapis.com/pub-tools-public-publication-data/pdf/36575.pdf
+
+image::con_perf.png[]
