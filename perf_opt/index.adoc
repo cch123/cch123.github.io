@@ -2,7 +2,8 @@
 
 Latency numbers every programmer should know:
 
-https://colin-scott.github.io/personal_website/research/interactive_latency.html
+https://colin-scott.github.io/personal_website/research/interactive_latency.html[Latency numbers every programmer should know:
+]
 
 == 优化工作流
 
