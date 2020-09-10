@@ -188,7 +188,9 @@ runtime 里的算法优化：
 === 过多的系统调用
 
 合并调用
+
 * 如 writev，但是合并的 syscall 延迟可能会上升。
+
 * pipeline，一下发一堆请求，不过现在可能连 HTTP 的 pipeline 都不一定支持得好。经常被 benchmark 玩家用来刷数据。
 
 === 过多的对象
