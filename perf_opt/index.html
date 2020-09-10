@@ -815,7 +815,7 @@ string -&gt; struct {value [12]byte, length int)
 </td>
 <td class="content">
 <div class="paragraph">
-<p>减少逃逸的手段:</p>
+<p>减少逃逸的手段</p>
 </div>
 </td>
 </tr>
@@ -826,7 +826,16 @@ string -&gt; struct {value [12]byte, length int)
 <li>
 <p>尽量少用 fmt.Print、fmt.Sprint 系列的函数。</p>
 </li>
+<li>
+<p>设计函数签名时，参数尽量少用 interface</p>
+</li>
+<li>
+<p>少用闭包，被闭包引用的局部变量会逃逸到堆上</p>
+</li>
 </ul>
+</div>
+<div class="paragraph">
+<p>不过这些也就说说而已，真的每一条都遵循怕是写代码的时候已经疯了。况且 Go 的 defer 只能在函数作用域内运作，为了避免 panic 死锁，很多时候套个闭包的操作还是比较常见的。</p>
 </div>
 </div>
 <div class="sect3">
@@ -1102,7 +1111,26 @@ go1.14
 <p>可以搜搜大量的 timewheel 库。</p>
 </div>
 <div class="paragraph">
-<p>ticker 使用时要尤其注意泄露问题，否则程序 CPU 使用会逐渐上涨。</p>
+<p>ticker 使用时要尤其注意泄露问题，否则程序 CPU 使用会逐渐上涨：</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="go" class="language-go hljs">package main
+
+import (
+    "fmt"
+    "time"
+)
+
+func main() {
+    for {
+        select {
+        case t := &lt;-time.Tick(time.Second * 2):
+            fmt.Println(t, "hello world")
+        }
+    }
+}</code></pre>
+</div>
 </div>
 </div>
 <div class="sect2">
@@ -1315,7 +1343,7 @@ func main() {
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-09-10 16:26:54 +0800
+Last updated 2020-09-10 19:44:36 +0800
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/github.min.css">

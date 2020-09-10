@@ -283,10 +283,16 @@ string -> struct {value [12]byte, length int)
 
 [TIP]
 ====
-减少逃逸的手段:
+减少逃逸的手段
 ====
 
 * 尽量少用 fmt.Print、fmt.Sprint 系列的函数。
+
+* 设计函数签名时，参数尽量少用 interface
+
+* 少用闭包，被闭包引用的局部变量会逃逸到堆上
+
+不过这些也就说说而已，真的每一条都遵循怕是写代码的时候已经疯了。况且 Go 的 defer 只能在函数作用域内运作，为了避免 panic 死锁，很多时候套个闭包的操作还是比较常见的。
 
 ==== map 结构的 128 阈值
 
@@ -507,7 +513,26 @@ go1.14
 
 可以搜搜大量的 timewheel 库。
 
-ticker 使用时要尤其注意泄露问题，否则程序 CPU 使用会逐渐上涨。
+ticker 使用时要尤其注意泄露问题，否则程序 CPU 使用会逐渐上涨：
+
+[source, go]
+----
+package main
+
+import (
+    "fmt"
+    "time"
+)
+
+func main() {
+    for {
+        select {
+        case t := <-time.Tick(time.Second * 2):
+            fmt.Println(t, "hello world")
+        }
+    }
+}
+----
 
 === 汇编优化
 
