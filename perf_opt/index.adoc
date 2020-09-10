@@ -310,7 +310,7 @@ func main() {
 }
 ----
 
-在 gdb 中可以看到 indirectkey 为 false。
+在 lldb 中可以看到 indirectkey 为 false。
 
 [source, text]
 ----
@@ -343,6 +343,8 @@ func main() {
   needkeyupdate = false
 }
 ----
+
+现在 lldb 不支持 Golang 了，在 gdb 或者 dlv 里应该也可以看到这个字段。
 
 === 过多的调度 CPU 占用(例如火焰图中，schedule 有一大条)
 
