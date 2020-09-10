@@ -913,6 +913,28 @@ func main() {
 <div class="paragraph">
 <p>性能敏感场合，全局锁，比如 rand 的全局锁。单机 10w+ QPS 即可能触发该瓶颈(和环境以及程序行为有关)</p>
 </div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="go" class="language-go hljs">type lockedSource struct {
+	lk  sync.Mutex
+	src Source64
+}
+
+func (r *lockedSource) Int63() (n int64) {
+	r.lk.Lock()
+	n = r.src.Int63()
+	r.lk.Unlock()
+	return
+}
+
+func (r *lockedSource) Uint64() (n uint64) {
+	r.lk.Lock()
+	n = r.src.Uint64()
+	r.lk.Unlock()
+	return
+}</code></pre>
+</div>
+</div>
 <div class="paragraph">
 <p>有些开源库设计是一个 struct 对应一个 sync.Pool，这种时候，如果你不对该 struct 进行复用，就会触发 runtime 中的锁冲突：</p>
 </div>
@@ -1282,7 +1304,7 @@ func main() {
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-09-10 16:13:32 +0800
+Last updated 2020-09-10 16:16:48 +0800
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/github.min.css">

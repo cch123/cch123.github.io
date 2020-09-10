@@ -364,6 +364,28 @@ https://github.com/valyala/fasthttp/blob/master/workerpool.go#L19[worker pool in
 
 性能敏感场合，全局锁，比如 rand 的全局锁。单机 10w+ QPS 即可能触发该瓶颈(和环境以及程序行为有关)
 
+[source, go]
+----
+type lockedSource struct {
+	lk  sync.Mutex
+	src Source64
+}
+
+func (r *lockedSource) Int63() (n int64) {
+	r.lk.Lock()
+	n = r.src.Int63()
+	r.lk.Unlock()
+	return
+}
+
+func (r *lockedSource) Uint64() (n uint64) {
+	r.lk.Lock()
+	n = r.src.Uint64()
+	r.lk.Unlock()
+	return
+}
+----
+
 有些开源库设计是一个 struct 对应一个 sync.Pool，这种时候，如果你不对该 struct 进行复用，就会触发 runtime 中的锁冲突：
 
 参考本文中的第一个案例：
