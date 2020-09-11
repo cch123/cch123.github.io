@@ -229,7 +229,7 @@ fmt.打印系列大部分会造成变量逃逸(interface 参数)。
 
 sync.Pool 才能实现 zero garbage。benchmark 中的 0 alloc，其实是因为对象有复用，alloc 平均 < 1。
 
-struct 可以复用(需要注意把老字段清零或每次都会覆盖)，slice 可以复用(a = a[:0])，但 map 不太好复用(得把所有 kv 全清空才行，成本可能比新建一个还要高)。比如 fasthttp 里，把本来应该是 map 的 header 结构变成了 slice，牺牲一点查询速度，换来了复用的方便。
+struct 可以复用(p = Person{}，用零值覆盖一次就可以)，slice 可以复用(a = a[:0])，但 map 不太好复用(得把所有 kv 全清空才行，成本可能比新建一个还要高)。比如 fasthttp 里，把本来应该是 map 的 header 结构变成了 slice，牺牲一点查询速度，换来了复用的方便。
 
 复用本身可能导致 bug，例如：
 
