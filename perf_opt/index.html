@@ -492,13 +492,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </blockquote>
 </div>
 <div class="paragraph">
-<p>比较类似，但是会包含那些 Off CPU 的 goroutine。</p>
-</div>
-<div class="paragraph">
-<p>可以用来诊断 CPU、IO 混合的执行时间占比。</p>
-</div>
-<div class="paragraph">
-<p>这个成本还是比普通的 pprof 高一些的。</p>
+<p>比较类似，但是会包含那些 Off CPU 的 goroutine。比如可以结合该库与 goroutine 的增长情况来做一段逻辑：当 goroutine 突然增长时，用 fgprof 采样 x 秒，可以发现是在代码的什么位置发生了阻塞。当然，也可以直接把 pprof 的 goroutine stack 给 dump 下来。</p>
 </div>
 </div>
 <div class="sect2">
@@ -766,6 +760,12 @@ func BenchmarkBytesBufferAppendSprintf(b *testing.B) {
 </div>
 <div class="paragraph">
 <p><a href="https://github.com/allegro/bigcache" class="bare">https://github.com/allegro/bigcache</a></p>
+</div>
+<div class="paragraph">
+<p>最近 dgraph 有一篇[分享](<a href="https://dgraph.io/blog/post/manual-memory-management-golang-jemalloc/)，用" class="bare">https://dgraph.io/blog/post/manual-memory-management-golang-jemalloc/)，用</a> jemalloc 和封装的 cgo 方法，可以把一些 hotpath 上分配的对象放在堆外，这个库的局限是在堆外分配的对象不能引用任何 Go 内部的对象，否则可能破坏 GC 时的引用关系。</p>
+</div>
+<div class="paragraph">
+<p>理论上一些 QPS 较低，但每次请求很大的系统，或许可以参考这个库，把 buffer 放在堆外。</p>
 </div>
 </div>
 <div class="sect3">
@@ -1215,7 +1215,7 @@ while 1:
 <p>调度 + 锁出问题，难复现，难定位。</p>
 </div>
 <div class="paragraph">
-<p>比如高压力下，刚拿到锁就被调度走了(可能因为正好发生了 GC)，且导致大量的其它需要获取锁的 goroutine 阻塞。</p>
+<p>比如高压力下，刚拿到锁就被调度走了，且导致大量的其它需要获取锁的 goroutine 阻塞。</p>
 </div>
 <div class="quoteblock">
 <blockquote>
@@ -1318,6 +1318,57 @@ func main() {
 <img src="con_perf.png" alt="con perf">
 </div>
 </div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="true补充知识"><a class="anchor" href="#true补充知识"></a>补充知识</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="true怎么阅读-pprof-的文本格式的-dump"><a class="anchor" href="#true怎么阅读-pprof-的文本格式的-dump"></a>怎么阅读 pprof 的文本格式的 dump</h3>
+<div class="paragraph">
+<p>下面是 heap profile 的 dump 结果，我们需要重点关心的是里面的几个数值：</p>
+</div>
+<hr>
+<div class="paragraph">
+<p>94(94 个 inuse objects): 6160384(6MB inuse space) [5828(5828 个 alloc objects): 381943808(381M 的 alloc space)] @ 0x1370f09 0x1397394 0x1396b32 0x1395e65 0x13981ab 0x13a313a 0x13a9c60 0x13a9401 0x13b4125 0x1703b69 0x1703b0b 0x170cdd1 0x170fcb7 0x170f90d 0x174e369 0x1510930 0x150b5a5 0x17ad46c 0x179fc0e 0x17b1958 0xf43e70 0x49b481
+<em>_</em></p>
+</div>
+<div class="paragraph">
+<p>后面这些指的是程序的代码地址，Go 可以根据这些地址在 .text 段中找到具体的代码位置。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="text" class="language-text hljs">---
+profile : heap profile: 1240: 51385648 [50587184: 280604213336] @ heap/1048576</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>94: 6160384 [5828: 381943808] @ 0x1370f09 0x1397394 0x1396b32 0x1395e65 0x13981ab 0x13a313a 0x13a9c60 0x13a9401 0x13b4125 0x1703b69 0x1703b0b 0x170cdd1 0x170fcb7 0x170f90d 0x174e369 0x1510930 0x150b5a5 0x17ad46c 0x179fc0e 0x17b1958 0xf43e70 0x49b481
+#    0x1370f08       gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/oooo/redis-go-client/async.NewAsyncClient+0x208                      /go/src/gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/oooo/redis-go-client/async/async_client.go:55
+#  0x1397393       gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/oooo/redis-go-client.(*ClientPool).newAsyncClient+0x73               /go/src/gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/oooo/redis-go-client/client_pool.go:110
+#        0x1396b31       gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/oooo/redis-go-client.(*ClientPool).takeClient+0x3f1                  /go/src/gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/oooo/redis-go-client/client_pool.go:66
+# 0x1395e64       gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/oooo/redis-go-client.(*ClientHandler).takeClient+0x1b4               /go/src/gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/oooo/redis-go-client/client_handler.go:46
+#      0x13981a gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/oooo/redis-go-client.(*CommandExecutor).do+0x1ba                     /go/src/gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/oooo/redis-go-client/command_executor.go:58
+#    0x13a313 gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/oooo/redis-go-client.(*TBaseClient).Do+0x99                          /go/src/gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/oooo/redis-go-client/redis_client.go:73
+#        0x13a9c5 gitlab.outer.com/ooh-mesh/mosn/pkg/upstream/zcache/client.(*RedisClientInterceptor).Do+0x13f                                        /go/src/gitlab.outer.com/ooh-mesh/mosn/pkg/upstream/zcache/client/redis_client_interceptor.go:29
+#      0x13a9400       gitlab.outer.com/ooh-mesh/mosn/pkg/upstream/zcache/client.(*RedisClientDelegate).GetTsEx+0x120                                      /go/src/gitlab.outer.com/ooh-mesh/mosn/pkg/upstream/zcache/client/redis_client_delegate.go:33
+# 0x13b4124       gitlab.outer.com/ooh-mesh/mosn/pkg/upstream/zcache/cachemanager.(*TBaseCacheManager).GetTsEx+0x1c4                                  /go/src/gitlab.outer.com/ooh-mesh/mosn/pkg/upstream/zcache/cachemanager/redis_cache_manager.go:96
+#     0x1703b68       gitlab.outer.com/ooh-mesh/mosn/pkg/upstream/zcache/cachemanager.(*RefreshableTBaseCacheManager).GetTsEx+0x98                        /go/src/gitlab.outer.com/ooh-mesh/mosn/pkg/upstream/zcache/cachemanager/refreshable_redis_cache_manager.go:55
+# 0x1703b0a       gitlab.outer.com/ooh-mesh/mosn/pkg/gateway/integrate.(*ZCacheClient).GetObjectLDC+0x3a                                              /go/src/gitlab.outer.com/ooh-mesh/mosn/pkg/gateway/integrate/zcacheclient.go:67
+#       0x170cdd0       gitlab.outer.com/ooh-mesh/mosn/pkg/gateway/session.queryAlipaySessionById+0x790                                                     /go/src/gitlab.outer.com/ooh-mesh/mosn/pkg/gateway/session/mobile_session_manager.go:42
+#       0x170fcb6       gitlab.outer.com/ooh-mesh/mosn/pkg/gateway/session.getAlipaySession+0x186                                                           /go/src/gitlab.outer.com/ooh-mesh/mosn/pkg/gateway/session/session_manager.go:35
+#      0x170f90c       gitlab.outer.com/ooh-mesh/mosn/pkg/gateway/session.InitSession+0x3c                        /go/src/gitlab.outer.com/ooh-mesh/mosn/pkg/gateway/session/session_manager.go:14
+#      0x174e368       gitlab.outer.com/ooh-mesh/mosn/pkg/gateway/handler.(*SessionHandler).HandleIn+0x618                                         /go/src/gitlab.outer.com/ooh-mesh/mosn/pkg/gateway/handler/session_handler.go:32
+#      0x151092f       gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/ooh-mesh/sofa-mosng/pkg/gateway.(*DefaultPipeline).RunInHandlers+0xcf   /go/src/gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/ooh-mesh/sofa-mosng/pkg/gateway/pipeline.go:45
+#    0x150b5a4       gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/ooh-mesh/sofa-mosng/pkg/gateway.(*GatewayFilter).OnReceive+0x3c4        /go/src/gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/ooh-mesh/sofa-mosng/pkg/gateway/filter.go:89
+#      0x17ad46b       gitlab.outer.com/ooh-mesh/mosn/vendor/mosn.io/mosn/pkg/proxy.(*downStream).runReceiveFilters+0xdb                                   /go/src/gitlab.outer.com/ooh-mesh/mosn/vendor/mosn.io/mosn/pkg/proxy/streamfilters.go:50
+#      0x179fc0d       gitlab.outer.com/ooh-mesh/mosn/vendor/mosn.io/mosn/pkg/proxy.(*downStream).receive+0x24d                                            /go/src/gitlab.outer.com/ooh-mesh/mosn/vendor/mosn.io/mosn/pkg/proxy/downstream.go:404
+#        0x17b1957       gitlab.outer.com/ooh-mesh/mosn/vendor/mosn.io/mosn/pkg/proxy.(*downStream).OnReceive.func1+0xd7                                     /go/src/gitlab.outer.com/ooh-mesh/mosn/vendor/mosn.io/mosn/pkg/proxy/downstream.go:373
+#        0xf43e6f        gitlab.outer.com/ooh-mesh/mosn/vendor/mosn.io/mosn/pkg/sync.(*workerPool).spawnWorker+0x4f                                          /go/src/gitlab.outer.com/ooh-mesh/mosn/vendor/mosn.io/mosn/pkg/sync/workerpool.go:169</p>
+</div>
+<hr>
 <div class="paragraph">
 <p>推荐材料：</p>
 </div>
@@ -1340,10 +1391,9 @@ func main() {
 </div>
 </div>
 </div>
-</div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-09-11 13:47:34 +0800
+Last updated 2020-12-03 13:06:48 +0800
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/github.min.css">
