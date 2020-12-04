@@ -1340,12 +1340,9 @@ func main() {
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="text" class="language-text hljs">---
-profile : heap profile: 1240: 51385648 [50587184: 280604213336] @ heap/1048576</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>94: 6160384 [5828: 381943808] @ 0x1370f09 0x1397394 0x1396b32 0x1395e65 0x13981ab 0x13a313a 0x13a9c60 0x13a9401 0x13b4125 0x1703b69 0x1703b0b 0x170cdd1 0x170fcb7 0x170f90d 0x174e369 0x1510930 0x150b5a5 0x17ad46c 0x179fc0e 0x17b1958 0xf43e70 0x49b481
+<pre class="highlightjs highlight"><code data-lang="go" class="language-go hljs">---
+profile : heap profile: 1240: 51385648 [50587184: 280604213336] @ heap/1048576
+94: 6160384 [5828: 381943808] @ 0x1370f09 0x1397394 0x1396b32 0x1395e65 0x13981ab 0x13a313a 0x13a9c60 0x13a9401 0x13b4125 0x1703b69 0x1703b0b 0x170cdd1 0x170fcb7 0x170f90d 0x174e369 0x1510930 0x150b5a5 0x17ad46c 0x179fc0e 0x17b1958 0xf43e70 0x49b481
 #    0x1370f08       gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/oooo/redis-go-client/async.NewAsyncClient+0x208                      /go/src/gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/oooo/redis-go-client/async/async_client.go:55
 #  0x1397393       gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/oooo/redis-go-client.(*ClientPool).newAsyncClient+0x73               /go/src/gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/oooo/redis-go-client/client_pool.go:110
 #        0x1396b31       gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/oooo/redis-go-client.(*ClientPool).takeClient+0x3f1                  /go/src/gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/oooo/redis-go-client/client_pool.go:66
@@ -1366,7 +1363,8 @@ profile : heap profile: 1240: 51385648 [50587184: 280604213336] @ heap/1048576</
 #      0x17ad46b       gitlab.outer.com/ooh-mesh/mosn/vendor/mosn.io/mosn/pkg/proxy.(*downStream).runReceiveFilters+0xdb                                   /go/src/gitlab.outer.com/ooh-mesh/mosn/vendor/mosn.io/mosn/pkg/proxy/streamfilters.go:50
 #      0x179fc0d       gitlab.outer.com/ooh-mesh/mosn/vendor/mosn.io/mosn/pkg/proxy.(*downStream).receive+0x24d                                            /go/src/gitlab.outer.com/ooh-mesh/mosn/vendor/mosn.io/mosn/pkg/proxy/downstream.go:404
 #        0x17b1957       gitlab.outer.com/ooh-mesh/mosn/vendor/mosn.io/mosn/pkg/proxy.(*downStream).OnReceive.func1+0xd7                                     /go/src/gitlab.outer.com/ooh-mesh/mosn/vendor/mosn.io/mosn/pkg/proxy/downstream.go:373
-#        0xf43e6f        gitlab.outer.com/ooh-mesh/mosn/vendor/mosn.io/mosn/pkg/sync.(*workerPool).spawnWorker+0x4f                                          /go/src/gitlab.outer.com/ooh-mesh/mosn/vendor/mosn.io/mosn/pkg/sync/workerpool.go:169</p>
+#        0xf43e6f        gitlab.outer.com/ooh-mesh/mosn/vendor/mosn.io/mosn/pkg/sync.(*workerPool).spawnWorker+0x4f                                          /go/src/gitlab.outer.com/ooh-mesh/mosn/vendor/mosn.io/mosn/pkg/sync/workerpool.go:169</code></pre>
+</div>
 </div>
 <hr>
 <div class="paragraph">
@@ -1393,7 +1391,7 @@ profile : heap profile: 1240: 51385648 [50587184: 280604213336] @ heap/1048576</
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-12-03 13:06:48 +0800
+Last updated 2020-12-04 15:09:54 +0800
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/github.min.css">

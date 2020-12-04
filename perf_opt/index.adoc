@@ -697,10 +697,9 @@ ___
 
 后面这些指的是程序的代码地址，Go 可以根据这些地址在 .text 段中找到具体的代码位置。
 
-[source, text]
+[source, go]
 ---
 profile : heap profile: 1240: 51385648 [50587184: 280604213336] @ heap/1048576
-
 94: 6160384 [5828: 381943808] @ 0x1370f09 0x1397394 0x1396b32 0x1395e65 0x13981ab 0x13a313a 0x13a9c60 0x13a9401 0x13b4125 0x1703b69 0x1703b0b 0x170cdd1 0x170fcb7 0x170f90d 0x174e369 0x1510930 0x150b5a5 0x17ad46c 0x179fc0e 0x17b1958 0xf43e70 0x49b481
 #    0x1370f08       gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/oooo/redis-go-client/async.NewAsyncClient+0x208                      /go/src/gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/oooo/redis-go-client/async/async_client.go:55
 #  0x1397393       gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/oooo/redis-go-client.(*ClientPool).newAsyncClient+0x73               /go/src/gitlab.outer.com/ooh-mesh/mosn/vendor/gitlab.outer.com/oooo/redis-go-client/client_pool.go:110
